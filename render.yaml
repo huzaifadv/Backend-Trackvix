@@ -1,0 +1,26 @@
+services:
+  - type: web
+    name: website-tracker-backend
+    runtime: node
+    buildCommand: npm install
+    startCommand: npm start
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        value: 5000
+      - key: API_VERSION
+        value: v1
+      # Add these in Render Dashboard (Settings > Environment):
+      # - MONGODB_URI_PROD (MongoDB connection string)
+      # - JWT_SECRET (32+ character random string)
+      # - JWT_REFRESH_SECRET (32+ character random string)
+      # - CORS_ORIGIN (comma-separated list: https://yourdomain.com,https://www.yourdomain.com)
+      # - STRIPE_SECRET_KEY (Stripe secret key)
+      # - SMTP_HOST (optional: email server)
+      # - SMTP_PORT (optional: email port)
+      # - SMTP_USER (optional: email username)
+      # - SMTP_PASS (optional: email password)
+      # - EMAIL_FROM (optional: sender email)
+    healthCheckPath: /ping
+    autoDeploy: true

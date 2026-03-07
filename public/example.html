@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Website Tracker - Example Implementation</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      max-width: 800px;
+      margin: 50px auto;
+      padding: 20px;
+      line-height: 1.6;
+    }
+    h1 {
+      color: #8c60f3;
+    }
+    .section {
+      margin: 30px 0;
+      padding: 20px;
+      background: #f5f5f5;
+      border-radius: 8px;
+    }
+    button, a.button {
+      background: #8c60f3;
+      color: white;
+      padding: 12px 24px;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+      text-decoration: none;
+      display: inline-block;
+      margin: 5px;
+    }
+    button:hover, a.button:hover {
+      background: #7348e0;
+    }
+    input, textarea {
+      width: 100%;
+      padding: 10px;
+      margin: 10px 0;
+      border: 1px solid #ddd;
+      border-radius: 4px;
+      box-sizing: border-box;
+    }
+    .note {
+      background: #fff3cd;
+      border: 1px solid #ffc107;
+      padding: 15px;
+      border-radius: 5px;
+      margin: 20px 0;
+    }
+  </style>
+</head>
+<body>
+  <h1>Website Tracker - Example Implementation</h1>
+
+  <div class="note">
+    <strong>Note:</strong> Replace <code>YOUR_API_KEY_HERE</code> in the tracking script below with your actual API key from the dashboard.
+  </div>
+
+  <div class="section">
+    <h2>1. Automatic Pageview Tracking</h2>
+    <p>This page load is automatically tracked as a <strong>pageview</strong> event.</p>
+    <p>Simply including the tracker script below will track all page visits.</p>
+  </div>
+
+  <div class="section">
+    <h2>2. Call Button Click Tracking</h2>
+    <p>Click the phone number below to track a <strong>tel_click</strong> event:</p>
+    <a href="tel:+1234567890">📞 Call Us: +1 (234) 567-890</a>
+  </div>
+
+  <div class="section">
+    <h2>3. WhatsApp Click Tracking</h2>
+    <p>Click the WhatsApp button to track a <strong>whatsapp_click</strong> event:</p>
+    <a href="https://wa.me/1234567890" target="_blank">💬 Chat on WhatsApp</a>
+  </div>
+
+  <div class="section">
+    <h2>4. CTA Button Click Tracking</h2>
+    <p>Click any button with the <code>.track-cta</code> class to track a <strong>cta_click</strong> event:</p>
+    <!-- <button class="track-cta" id="get-started-btn">Get Started</button>
+    <button class="track-cta" id="learn-more-btn">Learn More</button>
+    <button class="track-cta" data-cta-id="demo-request">Request Demo</button> -->
+  </div>
+
+
+  <div class="section">
+    
+    <h2>5. Form Submission Tracking</h2>
+    <p>Submit the form below to track a <strong>form_submit</strong> event:</p>
+    <form id="contact-form" onsubmit="event.preventDefault(); alert('Form submitted! Check your analytics.');">
+      <input type="text" name="name" placeholder="Your Name" required>
+      <input type="email" name="email" placeholder="Your Email" required>
+      <textarea name="message" placeholder="Your Message" rows="4" required></textarea>
+      <button type="submit">Submit Form</button>
+    </form>
+  </div>
+
+  <div class="section">
+    <h2>Installation Instructions</h2>
+    <p>Add this script to your website's <code>&lt;head&gt;</code> tag:</p>
+    <pre style="background: #333; color: #fff; padding: 15px; border-radius: 5px; overflow-x: auto;">
+&lt;script
+  src="http://localhost:5000/tracker.js"
+  data-api-key="258ce9d3550d9071f0459b4faee33d90c1b9cffbac7b1981e23d06db31efcf9b"
+  data-endpoint="http://localhost:5000/api/v1/events/log"
+  async
+&gt;&lt;/script&gt;</pre>
+
+    <p><strong>For production:</strong> Replace <code>localhost:5000</code> with your actual domain.</p>
+  </div>
+
+  <div class="section">
+    <h2>Tracked Events Summary</h2>
+    <ul>
+      <li><strong>Pageview:</strong> Automatically tracked on page load</li>
+      <li><strong>Tel Click:</strong> Tracks clicks on <code>&lt;a href="tel:..."&gt;</code> links</li>
+      <li><strong>WhatsApp Click:</strong> Tracks clicks on WhatsApp links (wa.me)</li>
+      <li><strong>CTA Click:</strong> Tracks clicks on elements with class <code>.track-cta</code></li>
+      <li><strong>Form Submit:</strong> Tracks all form submissions</li>
+    </ul>
+    <h3>Additional Data Collected:</h3>
+    <ul>
+      <li><strong>Visitor Type:</strong> New vs Returning (localStorage-based)</li>
+      <li><strong>Device:</strong> Desktop, Mobile, or Tablet</li>
+      <li><strong>Traffic Source:</strong> Google, Facebook, Instagram, YouTube, Direct, or Other</li>
+      <li><strong>Location:</strong> Country and City (IP-based, from backend)</li>
+    </ul>
+  </div>
+
+  <!-- Tracking Script - Replace YOUR_API_KEY_HERE with actual key -->
+  <script
+    src="http://localhost:5000/tracker.js"
+    data-api-key="258ce9d3550d9071f0459b4faee33d90c1b9cffbac7b1981e23d06db31efcf9b"
+    data-endpoint="http://localhost:5000/api/v1/events/log"
+    async
+  ></script>
+
+  <!-- Example: Manual tracking using the global API -->
+  <script>
+    // You can also manually track custom events
+    // window.WebTracker.track('custom_event', { customData: 'value' });
+
+    console.log('Website Tracker loaded! All events will be tracked automatically.');
+  </script>
+</body>
+</html>
