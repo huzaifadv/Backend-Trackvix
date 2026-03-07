@@ -2,6 +2,7 @@ const express = require('express');
 const morgan = require('morgan');
 const cookieParser = require('cookie-parser');
 const compression = require('compression');
+const cors = require('cors');
 const config = require('./config/environment');
 const logger = require('./config/logger');
 const routes = require('./routes');
@@ -29,6 +30,10 @@ const app = express();
 // ===========================
 app.use(helmetConfig);
 app.use(corsConfig);
+
+// Handle OPTIONS preflight requests
+app.options('*', cors(corsConfig));
+
 app.use(generalLimiter);
 app.use(sanitizeInput);
 

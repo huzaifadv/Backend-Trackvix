@@ -37,29 +37,28 @@ const helmetConfig = helmet({
 /**
  * CORS Configuration
  * Allows controlled cross-origin requests
- * In development: allows all origins
- * In production: uses environment-based whitelist
+ * Supports both local development and production frontend
  */
+const allowedOrigins = [
+  'http://localhost:3000',
+  'https://trackvix.vercel.app'
+];
+
 const corsConfig = cors({
   origin: (origin, callback) => {
     // Allow requests with no origin (mobile apps, Postman, etc.)
     if (!origin) return callback(null, true);
 
-    // Allow all origins in development
-    if (config.env === 'development') {
-      return callback(null, true);
-    }
-
-    // In production, check whitelist
-    if (config.cors.origin.includes(origin) || config.cors.origin.includes('*')) {
+    // Check if origin is in allowed list
+    if (allowedOrigins.includes(origin)) {
       callback(null, true);
     } else {
       callback(new Error('Not allowed by CORS'));
     }
   },
-  credentials: config.cors.credentials,
-  methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization', 'X-CSRF-Token', 'X-API-Key'],
+  credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS', 'PATCH'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'X-API-Key'],
   exposedHeaders: ['X-Total-Count', 'X-Page-Count'],
   maxAge: 86400, // 24 hours
   preflightContinue: false,
