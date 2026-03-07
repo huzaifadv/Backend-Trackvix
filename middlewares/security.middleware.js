@@ -37,24 +37,29 @@ const helmetConfig = helmet({
 /**
  * CORS Configuration
  * Allows controlled cross-origin requests
- * Supports both local development and production frontend
+ * Supports local development, production frontend, and Cloudflare tunnels
  */
-const allowedOrigins = [
-  'http://localhost:3000',
-  'https://trackvix.vercel.app'
-];
-
 const corsConfig = cors({
   origin: (origin, callback) => {
     // Allow requests with no origin (mobile apps, Postman, etc.)
     if (!origin) return callback(null, true);
 
+    // Get allowed origins from environment config
+    const allowedOrigins = config.cors.origin || ['http://localhost:3000'];
+
     // Check if origin is in allowed list
-    if (allowedOrigins.includes(origin)) {
-      callback(null, true);
-    } else {
-      callback(new Error('Not allowed by CORS'));
+    if (allowedOrigins.includes(origin) || allowedOrigins.includes('*')) {
+      return callback(null, true);
     }
+
+    // Allow any Cloudflare tunnel URL (*.trycloudflare.com)
+    // This allows development without updating .env every time tunnel restarts
+    if (origin.endsWith('.trycloudflare.com')) {
+      return callback(null, true);
+    }
+
+    // Reject all other origins
+    callback(new Error('Not allowed by CORS'));
   },
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS', 'PATCH'],
