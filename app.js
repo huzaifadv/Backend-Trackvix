@@ -28,16 +28,18 @@ const app = express();
 // ===========================
 // Security Middleware
 // ===========================
-// Skip Helmet and CORS for tracker.js (it has its own CORS headers in controller)
+// Skip Helmet and CORS for public tracking endpoints
 app.use((req, res, next) => {
-  if (req.path === '/tracker.js') {
+  // Skip for tracker.js and event logging endpoint
+  if (req.path === '/tracker.js' || req.path.includes('/api/v1/events/log')) {
     return next();
   }
   helmetConfig(req, res, next);
 });
 
 app.use((req, res, next) => {
-  if (req.path === '/tracker.js') {
+  // Skip for tracker.js and event logging endpoint (they have their own CORS)
+  if (req.path === '/tracker.js' || req.path.includes('/api/v1/events/log')) {
     return next();
   }
   corsConfig(req, res, next);
