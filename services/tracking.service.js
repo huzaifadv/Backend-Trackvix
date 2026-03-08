@@ -413,12 +413,22 @@ class TrackingService {
   static async getStatsSummary(websiteId, days = 30) {
     const startDate = new Date();
     startDate.setDate(startDate.getDate() - days);
+    const endDate = new Date();
 
-    const trafficStats = await this.getTrafficStats(websiteId, startDate, new Date());
-    const leadsStats = await this.getLeadsStats(websiteId, startDate, new Date());
+    const trafficStats = await this.getTrafficStats(websiteId, startDate, endDate);
+    const leadsStats = await this.getLeadsStats(websiteId, startDate, endDate);
 
-    // Get unique visitors count (IP-based)
-    const uniqueVisitors = await UniqueVisitor.getUniqueCount(websiteId, startDate, new Date());
+    // Get total visitors count - SAME AS TRAFFIC ANALYTICS
+    // Count visitor events (each new session = 1 visitor)
+    // This matches the Traffic Analytics logic exactly
+    const totalVisitors = await Event.countDocuments({
+      websiteId: new mongoose.Types.ObjectId(websiteId),
+      type: 'visitor',
+      createdAt: { $gte: startDate, $lte: endDate },
+    });
+
+    // Also keep unique visitors (IP-based) for additional context
+    const uniqueVisitors = await UniqueVisitor.getUniqueCount(websiteId, startDate, endDate);
 
     // Aggregate event totals
     const totalCallClicks = leadsStats.reduce((sum, stat) => sum + stat.callClicks, 0);
@@ -450,9 +460,10 @@ class TrackingService {
     const topCity = [...citiesMap.entries()].sort((a, b) => b[1] - a[1])[0];
 
     return {
-      period: { days, startDate, endDate: new Date() },
+      period: { days, startDate, endDate },
       traffic: {
-        uniqueVisitors, // Only visitors, no pageviews
+        totalVisitors, // Total visitor events - matches Traffic Analytics
+        uniqueVisitors, // Unique IP-based visitors (for additional context)
         topCountry: topCountry ? { country: topCountry[0], count: topCountry[1] } : null,
         topCity: topCity ? { city: topCity[0], count: topCity[1] } : null,
         countries: Object.fromEntries(countriesMap),

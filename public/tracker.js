@@ -107,6 +107,7 @@
    * Send event to backend using fetch
    */
   function sendEvent(eventData) {
+    // Build payload with only serializable data
     const payload = {
       apiKey: apiKey,
       eventType: eventData.eventType,
@@ -117,9 +118,27 @@
       // Send isNewVisitor ONLY for initial visitor tracking
       // Backend will use IP address to identify unique visitors
       isNewVisitor: eventData.isNewVisitor || false,
-      timestamp: new Date().toISOString(),
-      ...eventData.data
+      timestamp: new Date().toISOString()
     };
+
+    // Safely add event data (only primitive values, no DOM elements)
+    if (eventData.data && typeof eventData.data === 'object') {
+      try {
+        for (const key in eventData.data) {
+          if (eventData.data.hasOwnProperty(key)) {
+            const value = eventData.data[key];
+            // Only add primitive values (string, number, boolean)
+            // Skip objects, arrays, DOM elements, React fiber nodes, and null
+            if (value !== null && value !== undefined &&
+                (typeof value === 'string' || typeof value === 'number' || typeof value === 'boolean')) {
+              payload[key] = value;
+            }
+          }
+        }
+      } catch (error) {
+        console.warn('[Tracker] Error processing event data:', error);
+      }
+    }
 
     // Use fetch API for real-time tracking
     fetch(apiEndpoint, {
@@ -135,8 +154,8 @@
         console.error('Tracking error');
       }
     })
-    .catch(() => {
-      console.error('Tracking error');
+    .catch(error => {
+      console.error('Tracking error:', error);
     });
   }
 
@@ -211,11 +230,36 @@
 
   /**
    * Track form submissions
+   * @param {string|HTMLFormElement|Event} formIdOrEvent - Form ID, form element, or React event
    */
-  function trackFormSubmit(formId) {
+  function trackFormSubmit(formIdOrEvent) {
+    let formId = 'unknown';
+
+    // Handle different input types safely
+    try {
+      if (typeof formIdOrEvent === 'string') {
+        // Direct string ID
+        formId = formIdOrEvent;
+      } else if (formIdOrEvent && formIdOrEvent.target) {
+        // React synthetic event or native event
+        const form = formIdOrEvent.target.closest ?
+          formIdOrEvent.target.closest('form') :
+          formIdOrEvent.target;
+
+        if (form) {
+          formId = form.id || form.name || form.className || 'unknown';
+        }
+      } else if (formIdOrEvent && formIdOrEvent.tagName === 'FORM') {
+        // Direct form element
+        formId = formIdOrEvent.id || formIdOrEvent.name || formIdOrEvent.className || 'unknown';
+      }
+    } catch (error) {
+      console.warn('[Tracker] Error extracting form ID:', error);
+    }
+
     sendEvent({
       eventType: 'form_submit',
-      data: { formId }
+      data: { formId: String(formId) }
     });
   }
 
@@ -252,26 +296,40 @@
         return;
       }
 
-      // Track submit button clicks (for React/SPA forms)
+    }, true);
+
+    // Track form submissions (Works for both HTML & React forms)
+    // We track on submit button click because React often prevents default submit event
+    const trackedForms = new WeakSet(); // Prevent duplicate tracking
+
+    // Method 1: Track submit button clicks (for React/SPA forms)
+    document.addEventListener('click', function(e) {
       const submitButton = e.target.closest('button[type="submit"], input[type="submit"]');
       if (submitButton) {
         const form = submitButton.closest('form');
-        if (form) {
+        if (form && !trackedForms.has(form)) {
+          trackedForms.add(form);
           const formId = form.id || form.name || form.className || 'unknown';
-          // Small delay to ensure form submission happens first
-          setTimeout(() => {
-            trackFormSubmit(formId);
-          }, 100);
+
+          // Track immediately for React forms (they prevent default submit)
+          trackFormSubmit(formId);
+
+          // Reset after 2 seconds to allow re-submission tracking
+          setTimeout(() => trackedForms.delete(form), 2000);
         }
       }
     }, true);
 
-    // Track traditional form submissions (HTML forms)
+    // Method 2: Track traditional form submissions (HTML forms - backup)
     document.addEventListener('submit', function(e) {
       const form = e.target;
-      if (form.tagName === 'FORM') {
-        const formId = form.id || form.name || 'unknown';
+      if (form.tagName === 'FORM' && !trackedForms.has(form)) {
+        trackedForms.add(form);
+        const formId = form.id || form.name || form.className || 'unknown';
         trackFormSubmit(formId);
+
+        // Reset after 2 seconds
+        setTimeout(() => trackedForms.delete(form), 2000);
       }
     }, true);
   }

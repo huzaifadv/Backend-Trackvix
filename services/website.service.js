@@ -136,14 +136,15 @@ class WebsiteService {
 
   /**
    * Delete website (hard delete - permanently removes from database)
+   * Cascades deletion to all related data: events, stats, visitors, health records
    * @param {String} websiteId - Website ID
    * @param {String} userId - User ID
    * @returns {Boolean} Success status
    */
   async deleteWebsite(websiteId, userId) {
     try {
-      // Permanently delete website from database
-      const website = await Website.findOneAndDelete({
+      // Verify website exists and belongs to user
+      const website = await Website.findOne({
         _id: websiteId,
         userId,
       });
@@ -152,12 +153,59 @@ class WebsiteService {
         throw new OperationalError('Website not found', 404);
       }
 
+      logger.info(`Starting cascade deletion for website: ${websiteId} (${website.domain})`);
+
+      // Import all related models
+      const Event = require('../models/Event');
+      const TrafficDailyStats = require('../models/TrafficDailyStats');
+      const LeadsDailyStats = require('../models/LeadsDailyStats');
+      const UniqueVisitor = require('../models/UniqueVisitor');
+      const WebsiteHealth = require('../models/WebsiteHealth');
+      const ScanQueue = require('../models/ScanQueue');
+
+      // Cascade delete all related data in parallel for better performance
+      const deletionResults = await Promise.allSettled([
+        // Delete all events
+        Event.deleteMany({ websiteId }),
+
+        // Delete all traffic stats
+        TrafficDailyStats.deleteMany({ websiteId }),
+
+        // Delete all leads stats
+        LeadsDailyStats.deleteMany({ websiteId }),
+
+        // Delete all unique visitors
+        UniqueVisitor.deleteMany({ websiteId }),
+
+        // Delete all health scan records
+        WebsiteHealth.deleteMany({ websiteId }),
+
+        // Delete all pending/processing scan queue jobs
+        ScanQueue.deleteMany({ websiteId }),
+      ]);
+
+      // Log deletion results
+      let totalDeleted = 0;
+      deletionResults.forEach((result, index) => {
+        const modelNames = ['Events', 'TrafficDailyStats', 'LeadsDailyStats', 'UniqueVisitors', 'WebsiteHealth', 'ScanQueue'];
+        if (result.status === 'fulfilled') {
+          const count = result.value.deletedCount || 0;
+          totalDeleted += count;
+          logger.info(`Deleted ${count} ${modelNames[index]} for website ${websiteId}`);
+        } else {
+          logger.error(`Failed to delete ${modelNames[index]}:`, result.reason);
+        }
+      });
+
+      // Finally, delete the website itself
+      await Website.findByIdAndDelete(websiteId);
+
       // Remove from user's websites array
       await User.findByIdAndUpdate(userId, {
         $pull: { websites: websiteId },
       });
 
-      logger.info(`Website permanently deleted: ${websiteId} (${website.domain})`);
+      logger.info(`Website permanently deleted: ${websiteId} (${website.domain}) - Total related records deleted: ${totalDeleted}`);
 
       return true;
     } catch (error) {
