@@ -149,21 +149,30 @@
   function trackVisitor() {
     // Only track visitor once per page load
     if (visitorTracked) {
+      console.log('[Tracker] Visitor already tracked in this page load');
       return;
     }
 
     visitorTracked = true;
     const isNewSession = isNewVisitorSession();
 
+    console.log('[Tracker] Visitor session check:', {
+      isNewSession: isNewSession,
+      willTrack: isNewSession
+    });
+
     // Only send visitor event if this is truly a new session
     // This prevents counting the same visitor multiple times on page refresh
     if (isNewSession) {
+      console.log('[Tracker] New session detected - tracking visitor');
       // Send visitor event (backend will use IP to identify unique visitors)
       sendEvent({
         eventType: 'visitor',
         isNewVisitor: true,
         data: {}
       });
+    } else {
+      console.log('[Tracker] Existing session - visitor not tracked (already counted)');
     }
   }
 
