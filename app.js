@@ -10,7 +10,7 @@ const TrackingController = require('./controllers/tracking.controller');
 const {
   helmetConfig,
   corsConfig,
-  generalLimiter,
+  // generalLimiter, // Disabled for better user experience
   sanitizeInput,
 } = require('./middlewares/security.middleware');
 const {
@@ -34,7 +34,8 @@ app.use(corsConfig);
 // Handle OPTIONS preflight requests
 app.options('*', cors(corsConfig));
 
-app.use(generalLimiter);
+// Rate limiting disabled for better user experience
+// app.use(generalLimiter);
 app.use(sanitizeInput);
 
 // ===========================

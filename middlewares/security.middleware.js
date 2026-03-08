@@ -37,7 +37,7 @@ const helmetConfig = helmet({
 /**
  * CORS Configuration
  * Allows controlled cross-origin requests
- * Supports local development, production frontend, and Cloudflare tunnels
+ * Supports local development and production frontend
  */
 const corsConfig = cors({
   origin: (origin, callback) => {
@@ -49,12 +49,6 @@ const corsConfig = cors({
 
     // Check if origin is in allowed list
     if (allowedOrigins.includes(origin) || allowedOrigins.includes('*')) {
-      return callback(null, true);
-    }
-
-    // Allow any Cloudflare tunnel URL (*.trycloudflare.com)
-    // This allows development without updating .env every time tunnel restarts
-    if (origin.endsWith('.trycloudflare.com')) {
       return callback(null, true);
     }
 

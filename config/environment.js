@@ -33,9 +33,9 @@ const config = {
   security: {
     bcryptRounds: parseInt(process.env.BCRYPT_ROUNDS, 10) || 12,
     rateLimitWindow: parseInt(process.env.RATE_LIMIT_WINDOW_MS, 10) || 60000, // 1 minute
-    rateLimitMax: parseInt(process.env.RATE_LIMIT_MAX_REQUESTS, 10) || 5000, // 5000 requests per minute (increased from 1000)
+    rateLimitMax: parseInt(process.env.RATE_LIMIT_MAX_REQUESTS, 10) || 50000, // 50000 requests per minute for dashboard
     authRateLimitWindow: parseInt(process.env.AUTH_RATE_LIMIT_WINDOW_MS, 10) || 900000, // 15 minutes
-    authRateLimitMax: parseInt(process.env.AUTH_RATE_LIMIT_MAX_REQUESTS, 10) || 100, // 100 auth attempts per 15 min (increased from 20)
+    authRateLimitMax: parseInt(process.env.AUTH_RATE_LIMIT_MAX_REQUESTS, 10) || 100, // 100 auth attempts per 15 min
   },
 
   // CORS
