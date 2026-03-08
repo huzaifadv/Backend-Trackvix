@@ -251,9 +251,22 @@
         trackCtaClick(ctaId, ctaText);
         return;
       }
+
+      // Track submit button clicks (for React/SPA forms)
+      const submitButton = e.target.closest('button[type="submit"], input[type="submit"]');
+      if (submitButton) {
+        const form = submitButton.closest('form');
+        if (form) {
+          const formId = form.id || form.name || form.className || 'unknown';
+          // Small delay to ensure form submission happens first
+          setTimeout(() => {
+            trackFormSubmit(formId);
+          }, 100);
+        }
+      }
     }, true);
 
-    // Track form submissions
+    // Track traditional form submissions (HTML forms)
     document.addEventListener('submit', function(e) {
       const form = e.target;
       if (form.tagName === 'FORM') {
@@ -280,5 +293,14 @@
 
   // Start tracking
   init();
+
+  // Expose tracking functions globally for React/SPA usage
+  window.WebsiteTracker = {
+    trackFormSubmit: trackFormSubmit,
+    trackCtaClick: trackCtaClick,
+    trackTelClick: trackTelClick,
+    trackWhatsAppClick: trackWhatsAppClick,
+    sendEvent: sendEvent
+  };
 
 })();

@@ -87,7 +87,8 @@ if (config.env === 'development') {
 // ===========================
 // Trust Proxy (for rate limiting and IP detection)
 // ===========================
-app.set('trust proxy', 1);
+// Trust all proxies (AWS ALB, Nginx, Cloudflare, etc.)
+app.set('trust proxy', true);
 
 // ===========================
 // Serve Static Files (public folder)

@@ -73,13 +73,30 @@ class TrackingService {
     const logger = require('../config/logger');
 
     // Remove IPv6 prefix if present
-    const cleanIP = ip.replace(/^::ffff:/, '');
+    const cleanIP = ip.replace(/^::ffff:/, '').trim();
 
     logger.info('Geolocation lookup:', { originalIP: ip, cleanIP: cleanIP });
 
-    // Skip localhost and private IPs
-    if (cleanIP === '127.0.0.1' || cleanIP === 'localhost' || cleanIP.startsWith('192.168.') || cleanIP.startsWith('10.')) {
-      logger.warn('Local/private IP detected - geolocation unavailable');
+    // Skip localhost and private IPs (only in development)
+    const isPrivateIP = cleanIP === '127.0.0.1' ||
+                        cleanIP === 'localhost' ||
+                        cleanIP.startsWith('192.168.') ||
+                        cleanIP.startsWith('10.') ||
+                        cleanIP.startsWith('172.16.') ||
+                        cleanIP === '::1';
+
+    if (isPrivateIP) {
+      logger.warn('Local/private IP detected - geolocation unavailable:', cleanIP);
+      return {
+        country: 'Unknown',
+        city: 'Unknown'
+      };
+    }
+
+    // Validate IP format
+    const ipv4Regex = /^(\d{1,3}\.){3}\d{1,3}$/;
+    if (!ipv4Regex.test(cleanIP)) {
+      logger.warn('Invalid IP format:', cleanIP);
       return {
         country: 'Unknown',
         city: 'Unknown'
@@ -91,6 +108,7 @@ class TrackingService {
     if (geo) {
       const countryName = COUNTRY_NAMES[geo.country] || geo.country; // Use full name or fallback to code
       logger.info('Geolocation found:', {
+        ip: cleanIP,
         countryCode: geo.country,
         countryName: countryName,
         city: geo.city,

@@ -40,23 +40,34 @@ class TrackingController {
         });
       }
 
+      // Log all headers for debugging
+      logger.info('Request headers:', {
+        'cf-connecting-ip': req.headers['cf-connecting-ip'],
+        'x-forwarded-for': req.headers['x-forwarded-for'],
+        'x-real-ip': req.headers['x-real-ip'],
+        'x-client-ip': req.headers['x-client-ip'],
+        'remoteAddress': req.socket?.remoteAddress,
+        'req.ip': req.ip
+      });
+
       // Get client IP (considering proxies and Cloudflare)
-      const ip = req.headers['cf-connecting-ip'] || // Cloudflare
-                 req.headers['x-forwarded-for']?.split(',')[0]?.trim() || // Standard proxy
-                 req.headers['x-real-ip'] || // Nginx
-                 req.headers['x-client-ip'] || // Apache
-                 req.connection?.remoteAddress ||
-                 req.socket?.remoteAddress ||
-                 req.ip;
+      // Priority: Cloudflare > X-Forwarded-For > X-Real-IP > Express req.ip
+      let ip = req.headers['cf-connecting-ip'] || // Cloudflare
+               req.headers['x-real-ip'] || // Nginx
+               req.headers['x-client-ip'] || // Apache
+               req.ip || // Express built-in (works with trust proxy)
+               req.headers['x-forwarded-for']?.split(',')[0]?.trim() || // Standard proxy (last resort)
+               req.connection?.remoteAddress ||
+               req.socket?.remoteAddress;
+
+      // Clean IPv6 prefix
+      ip = ip?.replace(/^::ffff:/, '') || '127.0.0.1';
 
       // Get user agent
       const userAgent = req.headers['user-agent'] || 'unknown';
 
-      // Log IP and geo detection
-      logger.info('Client info:', {
-        ip: ip,
-        userAgent: userAgent.substring(0, 50) + '...'
-      });
+      // Log final detected IP
+      logger.info('Detected client IP:', ip);
 
       // Process event
       const result = await TrackingService.processEvent(apiKey, eventData, ip, userAgent);
