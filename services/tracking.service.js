@@ -4,6 +4,21 @@ const LeadsDailyStats = require('../models/LeadsDailyStats');
 const Website = require('../models/Website');
 const UniqueVisitor = require('../models/UniqueVisitor');
 
+// ISO country codes to full names mapping (most common countries)
+const COUNTRY_NAMES = {
+  'US': 'United States', 'PK': 'Pakistan', 'IN': 'India', 'GB': 'United Kingdom',
+  'CA': 'Canada', 'AU': 'Australia', 'DE': 'Germany', 'FR': 'France', 'IT': 'Italy',
+  'ES': 'Spain', 'NL': 'Netherlands', 'SE': 'Sweden', 'NO': 'Norway', 'DK': 'Denmark',
+  'FI': 'Finland', 'PL': 'Poland', 'RU': 'Russia', 'UA': 'Ukraine', 'TR': 'Turkey',
+  'SA': 'Saudi Arabia', 'AE': 'UAE', 'QA': 'Qatar', 'KW': 'Kuwait', 'OM': 'Oman',
+  'BD': 'Bangladesh', 'LK': 'Sri Lanka', 'NP': 'Nepal', 'AF': 'Afghanistan',
+  'CN': 'China', 'JP': 'Japan', 'KR': 'South Korea', 'TH': 'Thailand', 'VN': 'Vietnam',
+  'PH': 'Philippines', 'ID': 'Indonesia', 'MY': 'Malaysia', 'SG': 'Singapore',
+  'BR': 'Brazil', 'MX': 'Mexico', 'AR': 'Argentina', 'CL': 'Chile', 'CO': 'Colombia',
+  'EG': 'Egypt', 'NG': 'Nigeria', 'ZA': 'South Africa', 'KE': 'Kenya', 'GH': 'Ghana',
+  'NZ': 'New Zealand', 'IE': 'Ireland', 'CH': 'Switzerland', 'AT': 'Austria', 'BE': 'Belgium'
+};
+
 /**
  * Tracking Service
  * Handles event processing and aggregation with atomic updates
@@ -38,11 +53,16 @@ class TrackingService {
    * Get geolocation data from IP address
    */
   static getGeolocationFromIP(ip) {
+    const logger = require('../config/logger');
+
     // Remove IPv6 prefix if present
     const cleanIP = ip.replace(/^::ffff:/, '');
 
-    // Skip localhost
-    if (cleanIP === '127.0.0.1' || cleanIP === 'localhost') {
+    logger.info('Geolocation lookup:', { originalIP: ip, cleanIP: cleanIP });
+
+    // Skip localhost and private IPs
+    if (cleanIP === '127.0.0.1' || cleanIP === 'localhost' || cleanIP.startsWith('192.168.') || cleanIP.startsWith('10.')) {
+      logger.warn('Local/private IP detected - geolocation unavailable');
       return {
         country: 'Unknown',
         city: 'Unknown'
@@ -50,10 +70,26 @@ class TrackingService {
     }
 
     const geo = geoip.lookup(cleanIP);
-    return {
-      country: geo ? geo.country : 'Unknown',
-      city: geo ? geo.city : 'Unknown'
-    };
+
+    if (geo) {
+      const countryName = COUNTRY_NAMES[geo.country] || geo.country; // Use full name or fallback to code
+      logger.info('Geolocation found:', {
+        countryCode: geo.country,
+        countryName: countryName,
+        city: geo.city,
+        region: geo.region
+      });
+      return {
+        country: countryName,
+        city: geo.city || 'Unknown'
+      };
+    } else {
+      logger.warn('Geolocation not found for IP:', cleanIP);
+      return {
+        country: 'Unknown',
+        city: 'Unknown'
+      };
+    }
   }
 
   /**
