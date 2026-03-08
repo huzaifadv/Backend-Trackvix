@@ -12,6 +12,11 @@ class TrackingController {
    * POST /api/v1/events/log
    */
   static async collectEvent(req, res) {
+    // Set CORS headers for public endpoint
+    res.header('Access-Control-Allow-Origin', '*');
+    res.header('Access-Control-Allow-Methods', 'POST, OPTIONS');
+    res.header('Access-Control-Allow-Headers', 'Content-Type, X-API-Key');
+
     try {
       const { apiKey, ...eventData } = req.body;
 

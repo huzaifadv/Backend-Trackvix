@@ -46,7 +46,17 @@ app.use((req, res, next) => {
 });
 
 // Handle OPTIONS preflight requests
-app.options('*', cors(corsConfig));
+app.options('*', (req, res, next) => {
+  // Use public CORS for tracking endpoints
+  if (req.path.includes('/api/v1/events/log') || req.path === '/tracker.js') {
+    res.header('Access-Control-Allow-Origin', '*');
+    res.header('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
+    res.header('Access-Control-Allow-Headers', 'Content-Type, X-API-Key');
+    return res.sendStatus(200);
+  }
+  // Use restricted CORS for other endpoints
+  cors(corsConfig)(req, res, next);
+});
 
 // Rate limiting disabled for better user experience
 // app.use(generalLimiter);
