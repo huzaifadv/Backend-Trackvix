@@ -103,13 +103,13 @@
     <p>Add this script to your website's <code>&lt;head&gt;</code> tag:</p>
     <pre style="background: #333; color: #fff; padding: 15px; border-radius: 5px; overflow-x: auto;">
 &lt;script
-  src="http://localhost:5000/tracker.js"
-  data-api-key="258ce9d3550d9071f0459b4faee33d90c1b9cffbac7b1981e23d06db31efcf9b"
-  data-endpoint="http://localhost:5000/api/v1/events/log"
+  src="https://api.addwatch.site/tracker.js"
+  data-api-key="YOUR_API_KEY_HERE"
   async
 &gt;&lt;/script&gt;</pre>
 
-    <p><strong>For production:</strong> Replace <code>localhost:5000</code> with your actual domain.</p>
+    <p><strong>Note:</strong> Replace <code>YOUR_API_KEY_HERE</code> with your actual API key from the dashboard.</p>
+    <p><strong>Important:</strong> The script automatically detects the API endpoint from the script URL. No need to specify <code>data-endpoint</code> manually!</p>
   </div>
 
   <div class="section">
@@ -134,7 +134,6 @@
   <script
     src="http://localhost:5000/tracker.js"
     data-api-key="258ce9d3550d9071f0459b4faee33d90c1b9cffbac7b1981e23d06db31efcf9b"
-    data-endpoint="http://localhost:5000/api/v1/events/log"
     async
   ></script>
 

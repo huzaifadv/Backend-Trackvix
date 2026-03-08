@@ -13,10 +13,23 @@
 
   if (isBot) return;
 
-  // Get API key from script tag
+  // Get API key and endpoint from script tag
   const scriptTag = document.currentScript || document.querySelector('script[data-api-key]');
   const apiKey = scriptTag ? scriptTag.getAttribute('data-api-key') : null;
-  const apiEndpoint = scriptTag ? scriptTag.getAttribute('data-endpoint') || 'http://localhost:5000/api/v1/events/log' : 'http://localhost:5000/api/v1/events/log';
+
+  // Auto-detect API endpoint from script source URL
+  let apiEndpoint;
+  if (scriptTag && scriptTag.src) {
+    // Extract the base URL from tracker.js source (e.g., https://api.example.com/tracker.js -> https://api.example.com)
+    const scriptUrl = new URL(scriptTag.src);
+    apiEndpoint = `${scriptUrl.protocol}//${scriptUrl.host}/api/v1/events/log`;
+  } else if (scriptTag && scriptTag.getAttribute('data-endpoint')) {
+    // Fallback to manual endpoint if specified
+    apiEndpoint = scriptTag.getAttribute('data-endpoint');
+  } else {
+    // Last resort fallback
+    apiEndpoint = 'http://localhost:5000/api/v1/events/log';
+  }
 
   if (!apiKey) {
     console.error('Tracking error');
