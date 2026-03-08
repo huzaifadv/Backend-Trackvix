@@ -40,10 +40,13 @@ class TrackingController {
         });
       }
 
-      // Get client IP (considering proxies)
-      const ip = req.headers['x-forwarded-for']?.split(',')[0]?.trim() ||
-                 req.headers['x-real-ip'] ||
-                 req.socket.remoteAddress ||
+      // Get client IP (considering proxies and Cloudflare)
+      const ip = req.headers['cf-connecting-ip'] || // Cloudflare
+                 req.headers['x-forwarded-for']?.split(',')[0]?.trim() || // Standard proxy
+                 req.headers['x-real-ip'] || // Nginx
+                 req.headers['x-client-ip'] || // Apache
+                 req.connection?.remoteAddress ||
+                 req.socket?.remoteAddress ||
                  req.ip;
 
       // Get user agent

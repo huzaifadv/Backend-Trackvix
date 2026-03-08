@@ -26,6 +26,23 @@ const COUNTRY_NAMES = {
  */
 class TrackingService {
   /**
+   * Detect browser from user agent
+   */
+  static detectBrowser(userAgent) {
+    if (!userAgent) return 'Other';
+
+    const ua = userAgent.toLowerCase();
+
+    if (ua.includes('edg/') || ua.includes('edge')) return 'Edge';
+    if (ua.includes('chrome') && !ua.includes('edg')) return 'Chrome';
+    if (ua.includes('firefox')) return 'Firefox';
+    if (ua.includes('safari') && !ua.includes('chrome')) return 'Safari';
+    if (ua.includes('opera') || ua.includes('opr/')) return 'Other';
+
+    return 'Other';
+  }
+
+  /**
    * Detect traffic source from referrer and UTM params
    */
   static detectSource(referrer, utmSource) {
@@ -111,6 +128,7 @@ class TrackingService {
    */
   static async processVisitor(websiteId, eventData, ip, userAgent) {
     const source = this.detectSource(eventData.referrer, eventData.utm_source);
+    const browser = this.detectBrowser(userAgent);
     const geoData = this.getGeolocationFromIP(ip);
     const today = new Date();
 
@@ -121,6 +139,7 @@ class TrackingService {
       country: geoData.country,
       city: geoData.city,
       source: source,
+      browser: browser,
       device: eventData.device,
       isNewVisitor: eventData.isNewVisitor
     });
@@ -162,10 +181,11 @@ class TrackingService {
       });
     }
 
-    // Update traffic stats (source, device, location)
+    // Update traffic stats (source, device, browser, location)
     const updates = {
       source: source,
       device: eventData.device,
+      browser: browser,
       country: geoData.country,
       city: geoData.city,
     };
