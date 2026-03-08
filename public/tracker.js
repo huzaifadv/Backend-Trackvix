@@ -32,11 +32,13 @@
   }
 
   if (!apiKey) {
-    console.error('Tracking error');
+    console.error('[Tracker] Error: API key not found in script tag');
     return;
   }
 
-  console.log('Tracking script loaded successfully');
+  console.log('[Tracker] Script loaded successfully');
+  console.log('[Tracker] API Key:', apiKey.substring(0, 10) + '...');
+  console.log('[Tracker] API Endpoint:', apiEndpoint);
 
   /**
    * Check if this is a new visitor session

@@ -28,8 +28,20 @@ const app = express();
 // ===========================
 // Security Middleware
 // ===========================
-app.use(helmetConfig);
-app.use(corsConfig);
+// Skip Helmet and CORS for tracker.js (it has its own CORS headers in controller)
+app.use((req, res, next) => {
+  if (req.path === '/tracker.js') {
+    return next();
+  }
+  helmetConfig(req, res, next);
+});
+
+app.use((req, res, next) => {
+  if (req.path === '/tracker.js') {
+    return next();
+  }
+  corsConfig(req, res, next);
+});
 
 // Handle OPTIONS preflight requests
 app.options('*', cors(corsConfig));
