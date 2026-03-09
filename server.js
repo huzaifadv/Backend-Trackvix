@@ -27,7 +27,6 @@ const startServer = async () => {
   try {
     // Connect to database
     await database.connect();
-    logger.info('Database connection established');
 
     // Start listening
     const PORT = config.port;

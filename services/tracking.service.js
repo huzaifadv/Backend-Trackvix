@@ -1,4 +1,6 @@
+const mongoose = require('mongoose');
 const geoip = require('geoip-lite');
+const Event = require('../models/Event');
 const TrafficDailyStats = require('../models/TrafficDailyStats');
 const LeadsDailyStats = require('../models/LeadsDailyStats');
 const Website = require('../models/Website');

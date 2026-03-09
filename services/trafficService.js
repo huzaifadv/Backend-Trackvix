@@ -184,7 +184,7 @@ exports.getLocationBreakdown = async (websiteId, userId, startDate, endDate) => 
         websiteId: new mongoose.Types.ObjectId(websiteId),
         type: 'visitor',
         createdAt: { $gte: start, $lte: end },
-        country: { $exists: true, $ne: null },
+        country: { $exists: true, $ne: null, $ne: 'Unknown' },
       },
     },
     {
@@ -197,7 +197,7 @@ exports.getLocationBreakdown = async (websiteId, userId, startDate, endDate) => 
       $sort: { visitors: -1 },
     },
     {
-      $limit: 5,
+      $limit: 10, // Increased from 5 to 10
     },
     {
       $project: {
@@ -215,7 +215,7 @@ exports.getLocationBreakdown = async (websiteId, userId, startDate, endDate) => 
         websiteId: new mongoose.Types.ObjectId(websiteId),
         type: 'visitor',
         createdAt: { $gte: start, $lte: end },
-        city: { $exists: true, $ne: null },
+        city: { $exists: true, $ne: null, $ne: 'Unknown' },
       },
     },
     {
@@ -228,7 +228,7 @@ exports.getLocationBreakdown = async (websiteId, userId, startDate, endDate) => 
       $sort: { visitors: -1 },
     },
     {
-      $limit: 5,
+      $limit: 10, // Increased from 5 to 10
     },
     {
       $project: {
