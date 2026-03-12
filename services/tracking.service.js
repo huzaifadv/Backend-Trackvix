@@ -410,6 +410,84 @@ class TrackingService {
   }
 
   /**
+   * Get leads location breakdown (countries and cities)
+   * Only for actual lead events: call_click + form_submit
+   */
+  static async getLeadsLocationBreakdown(websiteId, startDate, endDate) {
+    const leadEventTypes = ['call_click', 'form_submit'];
+
+    // Top Countries for leads
+    const countries = await Event.aggregate([
+      {
+        $match: {
+          websiteId: new mongoose.Types.ObjectId(websiteId),
+          type: { $in: leadEventTypes },
+          createdAt: { $gte: new Date(startDate), $lte: new Date(endDate) },
+          country: { $exists: true, $ne: null, $ne: 'Unknown' },
+        },
+      },
+      {
+        $group: {
+          _id: '$country',
+          leads: { $sum: 1 },
+        },
+      },
+      {
+        $sort: { leads: -1 },
+      },
+      {
+        $limit: 10,
+      },
+      {
+        $project: {
+          _id: 0,
+          country: '$_id',
+          leads: 1,
+        },
+      },
+    ]);
+
+    // Top Cities for leads
+    const cities = await Event.aggregate([
+      {
+        $match: {
+          websiteId: new mongoose.Types.ObjectId(websiteId),
+          type: { $in: leadEventTypes },
+          createdAt: { $gte: new Date(startDate), $lte: new Date(endDate) },
+          city: { $exists: true, $ne: null, $ne: 'Unknown' },
+        },
+      },
+      {
+        $group: {
+          _id: '$city',
+          leads: { $sum: 1 },
+        },
+      },
+      {
+        $sort: { leads: -1 },
+      },
+      {
+        $limit: 10,
+      },
+      {
+        $project: {
+          _id: 0,
+          city: '$_id',
+          leads: 1,
+        },
+      },
+    ]);
+
+    // Convert country codes to full names
+    const countriesWithNames = countries.map(item => ({
+      country: COUNTRY_NAMES[item.country] || item.country,
+      leads: item.leads,
+    }));
+
+    return { countries: countriesWithNames, cities };
+  }
+
+  /**
    * Get aggregated stats summary
    */
   static async getStatsSummary(websiteId, days = 30) {

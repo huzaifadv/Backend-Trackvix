@@ -218,6 +218,47 @@ class TrackingController {
       return ApiResponse.error(res, 'Failed to retrieve leads stats');
     }
   }
+
+  /**
+   * Get leads location breakdown
+   * GET /api/v1/events/leads/:websiteId/locations
+   * Requires authentication
+   */
+  static async getLeadsLocations(req, res) {
+    try {
+      const { websiteId } = req.params;
+      const { days = 30 } = req.query;
+
+      // Verify user owns this website
+      const Website = require('../models/Website');
+      const website = await Website.findOne({
+        _id: websiteId,
+        userId: req.user._id
+      });
+
+      if (!website) {
+        return ApiResponse.notFound(res, 'Website not found');
+      }
+
+      // Calculate date range
+      const endDate = new Date();
+      const startDate = new Date();
+      startDate.setDate(endDate.getDate() - parseInt(days));
+
+      // Get leads location breakdown
+      const locations = await TrackingService.getLeadsLocationBreakdown(
+        websiteId,
+        startDate,
+        endDate
+      );
+
+      return ApiResponse.success(res, 'Leads locations retrieved', locations);
+
+    } catch (error) {
+      logger.error('Get leads locations error:', error);
+      return ApiResponse.error(res, 'Failed to retrieve leads locations');
+    }
+  }
 }
 
 module.exports = TrackingController;

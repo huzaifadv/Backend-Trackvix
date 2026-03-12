@@ -66,4 +66,15 @@ router.get(
   TrackingController.getLeadsStats
 );
 
+/**
+ * @route   GET /api/v1/events/leads/:websiteId/locations
+ * @desc    Get leads location breakdown (countries & cities)
+ * @access  Private (JWT auth)
+ */
+router.get(
+  '/leads/:websiteId/locations',
+  authenticate,
+  TrackingController.getLeadsLocations
+);
+
 module.exports = router;
