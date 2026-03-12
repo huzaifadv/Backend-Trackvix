@@ -186,20 +186,20 @@ class TrackingService {
       logger.error('Failed to create visitor event:', error);
     });
 
-    // Record unique visitor using IP address (per session)
-    // Backend uses IP to identify unique visitors
-    // Each new browser session counts as a new visitor
-    if (eventData.isNewVisitor === true) {
-      await UniqueVisitor.recordVisitor(
-        websiteId,
-        ip, // Use IP address for unique identification
-        userAgent,
-        geoData,
-        eventData.device
-      ).catch((error) => {
-        logger.error('Failed to record visitor:', error);
-      });
-    }
+    // Record unique visitor using IP address (for both new AND returning visitors)
+    // This upsert operation:
+    // - For NEW visitors: Creates record with firstSeen = now
+    // - For RETURNING visitors: Updates lastSeen and increments visitCount
+    // This ensures accurate tracking of both new and returning visitors
+    await UniqueVisitor.recordVisitor(
+      websiteId,
+      ip, // Use IP address for unique identification
+      userAgent,
+      geoData,
+      eventData.device
+    ).catch((error) => {
+      logger.error('Failed to record visitor:', error);
+    });
 
     // Update traffic stats (source, device, browser, location)
     const updates = {
@@ -432,17 +432,46 @@ class TrackingService {
     // Also keep unique visitors (IP-based) for additional context
     const uniqueVisitors = await UniqueVisitor.getUniqueCount(websiteId, startDate, endDate);
 
+    // Get new vs returning visitors
+    const newVisitors = await UniqueVisitor.countDocuments({
+      websiteId: new mongoose.Types.ObjectId(websiteId),
+      firstSeen: { $gte: startDate, $lte: endDate },
+    });
+
+    const returningVisitors = uniqueVisitors - newVisitors;
+
     // Aggregate event totals
     const totalCallClicks = leadsStats.reduce((sum, stat) => sum + stat.callClicks, 0);
     const totalFormSubmissions = leadsStats.reduce((sum, stat) => sum + stat.formSubmissions, 0);
     const totalCtaClicks = leadsStats.reduce((sum, stat) => sum + stat.ctaClicks || 0, 0);
     const totalWhatsAppClicks = leadsStats.reduce((sum, stat) => sum + stat.whatsappClicks || 0, 0);
 
-    // Aggregate countries and cities
+    // Aggregate sources, countries and cities
+    const sourcesMap = {
+      google: 0,
+      facebook: 0,
+      twitter: 0,
+      instagram: 0,
+      linkedin: 0,
+      youtube: 0,
+      direct: 0,
+      other: 0,
+    };
     const countriesMap = new Map();
     const citiesMap = new Map();
 
     trafficStats.forEach(stat => {
+      // Sources
+      if (stat.sources) {
+        sourcesMap.google += stat.sources.google || 0;
+        sourcesMap.facebook += stat.sources.facebook || 0;
+        sourcesMap.twitter += stat.sources.twitter || 0;
+        sourcesMap.instagram += stat.sources.instagram || 0;
+        sourcesMap.linkedin += stat.sources.linkedin || 0;
+        sourcesMap.youtube += stat.sources.youtube || 0;
+        sourcesMap.direct += stat.sources.direct || 0;
+        sourcesMap.other += stat.sources.other || 0;
+      }
       // Countries
       if (stat.countries) {
         stat.countries.forEach((count, country) => {
@@ -466,6 +495,9 @@ class TrackingService {
       traffic: {
         totalVisitors, // Total visitor events - matches Traffic Analytics
         uniqueVisitors, // Unique IP-based visitors (for additional context)
+        newVisitors, // First-time visitors in this period
+        returningVisitors, // Repeat visitors (uniqueVisitors - newVisitors)
+        sources: sourcesMap, // Traffic sources breakdown
         topCountry: topCountry ? { country: topCountry[0], count: topCountry[1] } : null,
         topCity: topCity ? { city: topCity[0], count: topCity[1] } : null,
         countries: Object.fromEntries(countriesMap),

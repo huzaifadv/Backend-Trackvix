@@ -74,16 +74,33 @@ exports.getTrafficSummary = async (websiteId, userId, startDate, endDate) => {
     return ((current - previous) / previous) * 100;
   };
 
+  // Total Leads (ONLY actual conversions: call_click + form_submit)
+  // Matching Dashboard logic - CTA and WhatsApp are interactions, not leads
+  const leadEventTypes = ['call_click', 'form_submit'];
+
+  const [totalLeads, prevTotalLeads] = await Promise.all([
+    Event.countDocuments({
+      websiteId: new mongoose.Types.ObjectId(websiteId),
+      type: { $in: leadEventTypes },
+      createdAt: { $gte: start, $lte: end },
+    }),
+    Event.countDocuments({
+      websiteId: new mongoose.Types.ObjectId(websiteId),
+      type: { $in: leadEventTypes },
+      createdAt: { $gte: prevStart, $lt: prevEnd },
+    }),
+  ]);
+
   return {
     totalVisitors: {
       count: totalVisitors,
       change: calculateChange(totalVisitors, prevTotalVisitors),
       isPositive: totalVisitors >= prevTotalVisitors,
     },
-    uniqueVisitors: {
-      count: uniqueVisitors,
-      change: calculateChange(uniqueVisitors, prevUniqueVisitors),
-      isPositive: uniqueVisitors >= prevUniqueVisitors,
+    totalLeads: {
+      count: totalLeads,
+      change: calculateChange(totalLeads, prevTotalLeads),
+      isPositive: totalLeads >= prevTotalLeads,
     },
     newVisitors: {
       count: newVisitors,
