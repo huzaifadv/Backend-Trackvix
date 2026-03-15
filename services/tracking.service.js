@@ -5,6 +5,7 @@ const TrafficDailyStats = require('../models/TrafficDailyStats');
 const LeadsDailyStats = require('../models/LeadsDailyStats');
 const Website = require('../models/Website');
 const UniqueVisitor = require('../models/UniqueVisitor');
+const Lead = require('../models/Lead');
 
 // ISO country codes to full names mapping (most common countries)
 const COUNTRY_NAMES = {
@@ -223,6 +224,78 @@ class TrackingService {
   }
 
   /**
+   * Create a Lead document from event data
+   */
+  static async createLeadFromEvent(websiteId, eventType, eventData, ip, userAgent, eventId = null) {
+    try {
+      const website = await Website.findById(websiteId).select('userId');
+      if (!website) {
+        throw new Error('Website not found');
+      }
+
+      const geoData = this.getGeolocationFromIP(ip);
+      const browser = this.detectBrowser(userAgent);
+      const source = this.detectSource(eventData.referrer, eventData.utm_source);
+
+      // Map source to Lead model format
+      const sourceMap = {
+        'google': 'Google',
+        'facebook': 'Facebook',
+        'instagram': 'Instagram',
+        'twitter': 'Twitter',
+        'linkedin': 'LinkedIn',
+        'youtube': 'YouTube',
+        'direct': 'Direct',
+        'other': 'Other'
+      };
+
+      // Normalize device value to match enum (Desktop, Mobile, Tablet)
+      let deviceValue = 'Desktop';
+      if (eventData.device) {
+        const deviceLower = eventData.device.toLowerCase();
+        if (deviceLower === 'mobile') deviceValue = 'Mobile';
+        else if (deviceLower === 'tablet') deviceValue = 'Tablet';
+        else if (deviceLower === 'desktop') deviceValue = 'Desktop';
+      }
+
+      const leadData = {
+        websiteId,
+        userId: website.userId,
+        eventType,
+        eventId,
+        // Contact info - Enhanced form tracking
+        name: eventData.name || 'Anonymous',
+        email: eventData.email || null,
+        phone: eventData.phone || eventData.phoneNumber || null,
+        message: eventData.message || null,
+        subject: eventData.subject || eventData.formName || eventData.formId || 'Contact Form',
+        formName: eventData.formName || eventData.formId || 'Contact Form',
+        // Visitor intelligence
+        source: sourceMap[source] || 'Direct',
+        device: deviceValue,
+        browser,
+        country: geoData.country,
+        city: geoData.city,
+        ipAddress: ip,
+        pageUrl: eventData.url,
+        referrer: eventData.referrer,
+        visitorFingerprint: eventData.visitorId,
+        pagesVisited: eventData.pagesVisited || []
+      };
+
+      const lead = await Lead.create(leadData);
+      const logger = require('../config/logger');
+      logger.info('Lead created:', { leadId: lead._id, eventType, websiteId });
+
+      return lead;
+    } catch (error) {
+      const logger = require('../config/logger');
+      logger.error('Error creating lead:', error);
+      return null;
+    }
+  }
+
+  /**
    * Update website metadata and activate on first event
    */
   static async updateWebsiteMetadata(websiteId) {
@@ -299,9 +372,15 @@ class TrackingService {
       ip: ip
     });
 
-    await Event.create(eventDoc).catch((error) => {
+    const event = await Event.create(eventDoc).catch((error) => {
       logger.error('Error creating call_click event:', error);
+      return null;
     });
+
+    // Create Lead document for inbox
+    if (event) {
+      await this.createLeadFromEvent(websiteId, 'call_click', eventData, ip, userAgent, event._id);
+    }
 
     // Increment event count (actual event, not pageview)
     this.updateWebsiteMetadata(websiteId).catch(() => {});
@@ -330,7 +409,7 @@ class TrackingService {
 
     // Create Event document for real-time tracking
     const Event = require('../models/Event');
-    await Event.create({
+    const event = await Event.create({
       websiteId: websiteId,
       type: 'form_submit',
       source: this.detectSource(eventData.source, eventData.referrer),
@@ -347,7 +426,13 @@ class TrackingService {
       }
     }).catch((error) => {
       console.error('Error creating form_submit event:', error);
+      return null;
     });
+
+    // Create Lead document for inbox
+    if (event) {
+      await this.createLeadFromEvent(websiteId, 'form_submit', eventData, ip, userAgent, event._id);
+    }
 
     // Increment event count (actual event, not pageview)
     this.updateWebsiteMetadata(websiteId).catch(() => {});
@@ -422,7 +507,7 @@ class TrackingService {
 
     // Create Event document for real-time tracking
     const Event = require('../models/Event');
-    await Event.create({
+    const event = await Event.create({
       websiteId: websiteId,
       type: 'whatsapp_click',
       source: this.detectSource(eventData.source, eventData.referrer),
@@ -439,7 +524,13 @@ class TrackingService {
       }
     }).catch((error) => {
       console.error('Error creating whatsapp_click event:', error);
+      return null;
     });
+
+    // Create Lead document for inbox
+    if (event) {
+      await this.createLeadFromEvent(websiteId, 'whatsapp_click', eventData, ip, userAgent, event._id);
+    }
 
     // Increment event count (actual event, not pageview)
     this.updateWebsiteMetadata(websiteId).catch(() => {});

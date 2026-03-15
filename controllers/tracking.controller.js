@@ -28,7 +28,17 @@ class TrackingController {
         device: eventData.device,
         source: eventData.source,
         visitorId: eventData.visitorId ? eventData.visitorId.substring(0, 15) + '...' : 'missing',
-        isNewVisitor: eventData.isNewVisitor
+        isNewVisitor: eventData.isNewVisitor,
+        // FORM DATA DEBUG
+        formData: {
+          name: eventData.name,
+          email: eventData.email,
+          phone: eventData.phone,
+          message: eventData.message,
+          subject: eventData.subject,
+          formId: eventData.formId,
+          formName: eventData.formName
+        }
       });
 
       // Validate API key

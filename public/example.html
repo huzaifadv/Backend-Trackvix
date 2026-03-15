@@ -87,15 +87,17 @@
 
 
   <div class="section">
-    
-    <h2>5. Form Submission Tracking</h2>
-    <p>Submit the form below to track a <strong>form_submit</strong> event:</p>
-    <form id="contact-form" onsubmit="event.preventDefault(); alert('Form submitted! Check your analytics.');">
+    <h2>5. Form Submission Tracking (Auto-Capture)</h2>
+    <p>Submit the form below to track a <strong>form_submit</strong> event with automatic data extraction:</p>
+    <form id="contact-form" onsubmit="handleFormSubmit(event)">
       <input type="text" name="name" placeholder="Your Name" required>
       <input type="email" name="email" placeholder="Your Email" required>
+      <input type="tel" name="phone" placeholder="Your Phone Number">
       <textarea name="message" placeholder="Your Message" rows="4" required></textarea>
+      <input type="text" name="subject" placeholder="Subject (optional)">
       <button type="submit">Submit Form</button>
     </form>
+    <div id="form-status" style="margin-top: 15px; padding: 10px; border-radius: 5px; display: none;"></div>
   </div>
 
   <div class="section">
@@ -138,12 +140,50 @@
   async
 ></script>
 
-  <!-- Example: Manual tracking using the global API -->
+  <!-- Form Submit Handler -->
   <script>
-    // You can also manually track custom events
-    // window.WebTracker.track('custom_event', { customData: 'value' });
+    function handleFormSubmit(event) {
+      event.preventDefault(); // Prevent default form submission
 
-    console.log('Website Tracker loaded! All events will be tracked automatically.');
+      const form = event.target;
+      const formStatus = document.getElementById('form-status');
+
+      // Show loading status
+      formStatus.style.display = 'block';
+      formStatus.style.background = '#d1ecf1';
+      formStatus.style.color = '#0c5460';
+      formStatus.textContent = 'Submitting form and tracking lead...';
+
+      // Let tracker capture the form data
+      // The tracker will automatically extract: name, email, phone, message, subject
+      console.log('Form submitted - Tracker will auto-capture data');
+
+      // Simulate form submission success
+      setTimeout(() => {
+        formStatus.style.background = '#d4edda';
+        formStatus.style.color = '#155724';
+        formStatus.textContent = '✓ Form submitted successfully! Check Lead Inbox for the captured data.';
+
+        // Reset form
+        form.reset();
+
+        // Hide status after 5 seconds
+        setTimeout(() => {
+          formStatus.style.display = 'none';
+        }, 5000);
+      }, 1000);
+    }
+
+    // Log when tracker is ready
+    window.addEventListener('load', function() {
+      if (window.WebsiteTracker) {
+        console.log('✓ Website Tracker loaded successfully!');
+        console.log('✓ All events will be tracked automatically.');
+        console.log('✓ Form data will be auto-extracted on submission.');
+      } else {
+        console.error('✗ Website Tracker failed to load. Check API key and script URL.');
+      }
+    });
   </script>
 </body>
 </html>

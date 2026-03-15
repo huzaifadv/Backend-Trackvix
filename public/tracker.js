@@ -229,37 +229,111 @@
   }
 
   /**
-   * Track form submissions
-   * @param {string|HTMLFormElement|Event} formIdOrEvent - Form ID, form element, or React event
+   * Track form submissions with automatic data extraction
+   * @param {string|HTMLFormElement|Event|Object} formIdOrEvent - Form ID, form element, React event, or manual data object
    */
   function trackFormSubmit(formIdOrEvent) {
-    let formId = 'unknown';
+    let formId = 'Contact Form';
+    let formData = {
+      name: null,
+      email: null,
+      phone: null,
+      message: null,
+      subject: null
+    };
 
-    // Handle different input types safely
     try {
-      if (typeof formIdOrEvent === 'string') {
-        // Direct string ID
-        formId = formIdOrEvent;
-      } else if (formIdOrEvent && formIdOrEvent.target) {
-        // React synthetic event or native event
-        const form = formIdOrEvent.target.closest ?
-          formIdOrEvent.target.closest('form') :
-          formIdOrEvent.target;
+      // Case 1: Manual data object (for React Hook Form or custom tracking)
+      if (formIdOrEvent && typeof formIdOrEvent === 'object' && formIdOrEvent.name) {
+        formData.name = formIdOrEvent.name || null;
+        formData.email = formIdOrEvent.email || null;
+        formData.phone = formIdOrEvent.phone || null;
+        formData.message = formIdOrEvent.message || null;
+        formData.subject = formIdOrEvent.subject || null;
+        formId = formIdOrEvent.formId || formIdOrEvent.formName || 'Contact Form';
+      }
+      // Case 2: Extract from form element
+      else {
+        let form = null;
+
+        if (typeof formIdOrEvent === 'string') {
+          // Direct string ID - try to find form
+          form = document.getElementById(formIdOrEvent) || document.querySelector(`form[name="${formIdOrEvent}"]`);
+        } else if (formIdOrEvent && formIdOrEvent.target) {
+          // React synthetic event or native event
+          form = formIdOrEvent.target.closest ?
+            formIdOrEvent.target.closest('form') :
+            formIdOrEvent.target;
+        } else if (formIdOrEvent && formIdOrEvent.tagName === 'FORM') {
+          // Direct form element
+          form = formIdOrEvent;
+        }
 
         if (form) {
-          formId = form.id || form.name || form.className || 'unknown';
+          // Extract form identifier
+          formId = form.id || form.name || form.getAttribute('data-form-name') || 'Contact Form';
+
+          // AUTO-EXTRACT FORM DATA
+          const formElements = form.elements;
+
+          for (let i = 0; i < formElements.length; i++) {
+            const field = formElements[i];
+            const fieldName = (field.name || field.id || '').toLowerCase();
+            const fieldValue = field.value ? field.value.trim() : '';
+
+            // Skip empty fields, buttons, and submit elements
+            if (!fieldValue || field.type === 'submit' || field.type === 'button' || field.type === 'reset') {
+              continue;
+            }
+
+            // Match NAME field (supports: name, fullname, full_name, fname, first_name, customer_name, your_name, etc.)
+            if (!formData.name && fieldName.match(/(^|[_\-\s])(name|fname|first|fullname|full[_\-\s]?name|customer[_\-\s]?name|your[_\-\s]?name)($|[_\-\s])/i)) {
+              formData.name = fieldValue;
+            }
+            // Match EMAIL field (supports: email, mail, e_mail, email_address, your_email, etc.)
+            else if (!formData.email && fieldName.match(/(^|[_\-\s])(email|mail|e[_\-\s]?mail|email[_\-\s]?address|your[_\-\s]?email)($|[_\-\s])/i)) {
+              formData.email = fieldValue;
+            }
+            // Match PHONE field (supports: phone, mobile, tel, contact, phone_number, mobile_number, etc.)
+            else if (!formData.phone && fieldName.match(/(^|[_\-\s])(phone|mobile|tel|contact|whatsapp|phone[_\-\s]?number|mobile[_\-\s]?number|contact[_\-\s]?number)($|[_\-\s])/i)) {
+              formData.phone = fieldValue;
+            }
+            // Match MESSAGE field (supports: message, comment, comments, description, query, question, details, etc.)
+            else if (!formData.message && fieldName.match(/(^|[_\-\s])(message|comment|comments|msg|description|query|question|details|your[_\-\s]?message|inquiry)($|[_\-\s])/i)) {
+              formData.message = fieldValue;
+            }
+            // Match SUBJECT field (supports: subject, topic, regarding, etc.)
+            else if (!formData.subject && fieldName.match(/(^|[_\-\s])(subject|topic|regarding|reason)($|[_\-\s])/i)) {
+              formData.subject = fieldValue;
+            }
+          }
+
+          console.log('[Tracker] Form data extracted:', {
+            formId,
+            hasName: !!formData.name,
+            hasEmail: !!formData.email,
+            hasPhone: !!formData.phone,
+            hasMessage: !!formData.message,
+            hasSubject: !!formData.subject
+          });
         }
-      } else if (formIdOrEvent && formIdOrEvent.tagName === 'FORM') {
-        // Direct form element
-        formId = formIdOrEvent.id || formIdOrEvent.name || formIdOrEvent.className || 'unknown';
       }
     } catch (error) {
-      console.warn('[Tracker] Error extracting form ID:', error);
+      console.warn('[Tracker] Error extracting form data:', error);
     }
 
+    // Send event with extracted form data
     sendEvent({
       eventType: 'form_submit',
-      data: { formId: String(formId) }
+      data: {
+        formId: String(formId),
+        formName: String(formId),
+        name: formData.name || 'Anonymous',
+        email: formData.email || undefined,
+        phone: formData.phone || undefined,
+        message: formData.message || undefined,
+        subject: formData.subject || formId
+      }
     });
   }
 
