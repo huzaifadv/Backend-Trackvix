@@ -257,7 +257,7 @@ class TrackingService {
    * Process tel click event
    * NOTE: Does NOT record visitor - only pageviews record visitors
    */
-  static async processTelClick(websiteId, eventData) {
+  static async processTelClick(websiteId, eventData, ip, userAgent) {
     const today = new Date();
 
     const updates = {
@@ -267,6 +267,30 @@ class TrackingService {
 
     // Atomic update to leads stats
     await LeadsDailyStats.incrementStats(websiteId, today, updates);
+
+    // Get geolocation from IP
+    const geoData = this.getGeolocationFromIP(ip);
+
+    // Create Event document for real-time tracking
+    const Event = require('../models/Event');
+    await Event.create({
+      websiteId: websiteId,
+      type: 'call_click', // Event model uses 'call_click' not 'tel_click'
+      source: this.getTrafficSource(eventData.source, eventData.referrer),
+      country: geoData.country,
+      city: geoData.city,
+      device: eventData.device || 'unknown',
+      visitorId: eventData.visitorId,
+      metadata: {
+        userAgent: userAgent,
+        ip: ip,
+        referrer: eventData.referrer,
+        path: eventData.url,
+        phoneNumber: eventData.phoneNumber,
+      }
+    }).catch((error) => {
+      console.error('Error creating call_click event:', error);
+    });
 
     // Increment event count (actual event, not pageview)
     this.updateWebsiteMetadata(websiteId).catch(() => {});
@@ -278,7 +302,7 @@ class TrackingService {
    * Process form submit event
    * NOTE: Does NOT record visitor - only pageviews record visitors
    */
-  static async processFormSubmit(websiteId, eventData) {
+  static async processFormSubmit(websiteId, eventData, ip, userAgent) {
     const today = new Date();
 
     const updates = {
@@ -290,6 +314,30 @@ class TrackingService {
     // Atomic update to leads stats
     await LeadsDailyStats.incrementStats(websiteId, today, updates);
 
+    // Get geolocation from IP
+    const geoData = this.getGeolocationFromIP(ip);
+
+    // Create Event document for real-time tracking
+    const Event = require('../models/Event');
+    await Event.create({
+      websiteId: websiteId,
+      type: 'form_submit',
+      source: this.getTrafficSource(eventData.source, eventData.referrer),
+      country: geoData.country,
+      city: geoData.city,
+      device: eventData.device || 'unknown',
+      visitorId: eventData.visitorId,
+      metadata: {
+        userAgent: userAgent,
+        ip: ip,
+        referrer: eventData.referrer,
+        path: eventData.url,
+        formId: eventData.formId || 'unknown',
+      }
+    }).catch((error) => {
+      console.error('Error creating form_submit event:', error);
+    });
+
     // Increment event count (actual event, not pageview)
     this.updateWebsiteMetadata(websiteId).catch(() => {});
 
@@ -300,7 +348,7 @@ class TrackingService {
    * Process CTA button click event
    * NOTE: Does NOT record visitor - only pageviews record visitors
    */
-  static async processCtaClick(websiteId, eventData) {
+  static async processCtaClick(websiteId, eventData, ip, userAgent) {
     const today = new Date();
 
     const updates = {
@@ -312,6 +360,30 @@ class TrackingService {
     // Atomic update to leads stats
     await LeadsDailyStats.incrementStats(websiteId, today, updates);
 
+    // Get geolocation from IP
+    const geoData = this.getGeolocationFromIP(ip);
+
+    // Create Event document for real-time tracking
+    const Event = require('../models/Event');
+    await Event.create({
+      websiteId: websiteId,
+      type: 'cta_click',
+      source: this.getTrafficSource(eventData.source, eventData.referrer),
+      country: geoData.country,
+      city: geoData.city,
+      device: eventData.device || 'unknown',
+      visitorId: eventData.visitorId,
+      metadata: {
+        userAgent: userAgent,
+        ip: ip,
+        referrer: eventData.referrer,
+        path: eventData.url,
+        ctaId: eventData.ctaId || eventData.ctaText || 'unknown',
+      }
+    }).catch((error) => {
+      console.error('Error creating cta_click event:', error);
+    });
+
     // Increment event count (actual event, not pageview)
     this.updateWebsiteMetadata(websiteId).catch(() => {});
 
@@ -322,7 +394,7 @@ class TrackingService {
    * Process WhatsApp click event
    * NOTE: Does NOT record visitor - only pageviews record visitors
    */
-  static async processWhatsAppClick(websiteId, eventData) {
+  static async processWhatsAppClick(websiteId, eventData, ip, userAgent) {
     const today = new Date();
 
     const updates = {
@@ -333,6 +405,30 @@ class TrackingService {
 
     // Atomic update to leads stats
     await LeadsDailyStats.incrementStats(websiteId, today, updates);
+
+    // Get geolocation from IP
+    const geoData = this.getGeolocationFromIP(ip);
+
+    // Create Event document for real-time tracking
+    const Event = require('../models/Event');
+    await Event.create({
+      websiteId: websiteId,
+      type: 'whatsapp_click',
+      source: this.getTrafficSource(eventData.source, eventData.referrer),
+      country: geoData.country,
+      city: geoData.city,
+      device: eventData.device || 'unknown',
+      visitorId: eventData.visitorId,
+      metadata: {
+        userAgent: userAgent,
+        ip: ip,
+        referrer: eventData.referrer,
+        path: eventData.url,
+        phoneNumber: eventData.phoneNumber,
+      }
+    }).catch((error) => {
+      console.error('Error creating whatsapp_click event:', error);
+    });
 
     // Increment event count (actual event, not pageview)
     this.updateWebsiteMetadata(websiteId).catch(() => {});
@@ -357,19 +453,19 @@ class TrackingService {
         break;
 
       case 'tel_click':
-        await this.processTelClick(website._id, eventData);
+        await this.processTelClick(website._id, eventData, ip, userAgent);
         break;
 
       case 'whatsapp_click':
-        await this.processWhatsAppClick(website._id, eventData);
+        await this.processWhatsAppClick(website._id, eventData, ip, userAgent);
         break;
 
       case 'cta_click':
-        await this.processCtaClick(website._id, eventData);
+        await this.processCtaClick(website._id, eventData, ip, userAgent);
         break;
 
       case 'form_submit':
-        await this.processFormSubmit(website._id, eventData);
+        await this.processFormSubmit(website._id, eventData, ip, userAgent);
         break;
 
       default:
@@ -417,13 +513,14 @@ class TrackingService {
     const leadEventTypes = ['call_click', 'form_submit'];
 
     // Top Countries for leads
+    // Include "Unknown" for localhost testing
     const countries = await Event.aggregate([
       {
         $match: {
           websiteId: new mongoose.Types.ObjectId(websiteId),
           type: { $in: leadEventTypes },
           createdAt: { $gte: new Date(startDate), $lte: new Date(endDate) },
-          country: { $exists: true, $ne: null, $ne: 'Unknown' },
+          country: { $exists: true, $ne: null },
         },
       },
       {
@@ -448,13 +545,14 @@ class TrackingService {
     ]);
 
     // Top Cities for leads
+    // Include "Unknown" for localhost testing
     const cities = await Event.aggregate([
       {
         $match: {
           websiteId: new mongoose.Types.ObjectId(websiteId),
           type: { $in: leadEventTypes },
           createdAt: { $gte: new Date(startDate), $lte: new Date(endDate) },
-          city: { $exists: true, $ne: null, $ne: 'Unknown' },
+          city: { $exists: true, $ne: null },
         },
       },
       {

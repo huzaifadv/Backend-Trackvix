@@ -5,6 +5,7 @@ const eventRoutes = require('./event.routes');
 const trackingRoutes = require('./tracking.routes');
 const analyticsRoutes = require('./analytics.routes');
 const trafficRoutes = require('./traffic');
+const leadsRoutes = require('./leads.routes');
 const healthRoutes = require('./health.routes');
 const billingRoutes = require('./billing.routes');
 const adminRoutes = require('./admin.routes');
@@ -22,6 +23,7 @@ router.use('/websites', websiteRoutes);
 router.use('/events', trackingRoutes);
 router.use('/analytics', analyticsRoutes);
 router.use('/analytics/traffic', trafficRoutes);
+router.use('/leads', leadsRoutes);
 router.use('/health', healthRoutes);
 router.use('/billing', billingRoutes);
 router.use('/admin', adminRoutes);
@@ -38,6 +40,7 @@ router.get('/', (req, res) => {
       websites: '/api/v1/websites',
       events: '/api/v1/events',
       analytics: '/api/v1/analytics',
+      leads: '/api/v1/leads',
       health: '/api/v1/health',
       billing: '/api/v1/billing',
       admin: '/api/v1/admin',

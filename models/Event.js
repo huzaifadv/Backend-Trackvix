@@ -69,13 +69,30 @@ const eventSchema = new mongoose.Schema(
  * Critical for analytics queries with time ranges
  * Optimized for multi-tenant isolation and 50k+ users
  */
+// Core time-series indexes
 eventSchema.index({ websiteId: 1, createdAt: -1 });
 eventSchema.index({ websiteId: 1, type: 1, createdAt: -1 });
 eventSchema.index({ createdAt: -1 });
+
+// Visitor tracking
+eventSchema.index({ websiteId: 1, visitorId: 1 });
+eventSchema.index({ visitorId: 1, createdAt: -1 });
+
+// Location analytics - CRITICAL for performance
+eventSchema.index({ websiteId: 1, country: 1, createdAt: -1 });
+eventSchema.index({ websiteId: 1, city: 1, createdAt: -1 });
 eventSchema.index({ country: 1 });
-eventSchema.index({ websiteId: 1, visitorId: 1 }); // For visitor tracking
-eventSchema.index({ websiteId: 1, country: 1, createdAt: -1 }); // Country analytics per website
-eventSchema.index({ websiteId: 1, device: 1, createdAt: -1 }); // Device analytics per website
+
+// Device analytics
+eventSchema.index({ websiteId: 1, device: 1, createdAt: -1 });
+
+// Type-based queries (admin analytics, event filtering)
+eventSchema.index({ type: 1, createdAt: -1 });
+eventSchema.index({ websiteId: 1, type: 1 }); // Type filtering without dates
+
+// New visitor analytics
+eventSchema.index({ isNewVisitor: 1, createdAt: -1 });
+eventSchema.index({ websiteId: 1, isNewVisitor: 1, createdAt: -1 });
 
 /**
  * TTL index for automatic data cleanup (optional)
