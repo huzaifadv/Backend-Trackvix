@@ -273,10 +273,12 @@ class TrackingService {
 
     // Create Event document for real-time tracking
     const Event = require('../models/Event');
-    await Event.create({
+    const logger = require('../config/logger');
+
+    const eventDoc = {
       websiteId: websiteId,
       type: 'call_click', // Event model uses 'call_click' not 'tel_click'
-      source: this.getTrafficSource(eventData.source, eventData.referrer),
+      source: this.detectSource(eventData.source, eventData.referrer),
       country: geoData.country,
       city: geoData.city,
       device: eventData.device || 'unknown',
@@ -288,8 +290,17 @@ class TrackingService {
         path: eventData.url,
         phoneNumber: eventData.phoneNumber,
       }
-    }).catch((error) => {
-      console.error('Error creating call_click event:', error);
+    };
+
+    logger.info('Creating call_click event with location:', {
+      websiteId: websiteId.toString(),
+      country: geoData.country,
+      city: geoData.city,
+      ip: ip
+    });
+
+    await Event.create(eventDoc).catch((error) => {
+      logger.error('Error creating call_click event:', error);
     });
 
     // Increment event count (actual event, not pageview)
@@ -322,7 +333,7 @@ class TrackingService {
     await Event.create({
       websiteId: websiteId,
       type: 'form_submit',
-      source: this.getTrafficSource(eventData.source, eventData.referrer),
+      source: this.detectSource(eventData.source, eventData.referrer),
       country: geoData.country,
       city: geoData.city,
       device: eventData.device || 'unknown',
@@ -368,7 +379,7 @@ class TrackingService {
     await Event.create({
       websiteId: websiteId,
       type: 'cta_click',
-      source: this.getTrafficSource(eventData.source, eventData.referrer),
+      source: this.detectSource(eventData.source, eventData.referrer),
       country: geoData.country,
       city: geoData.city,
       device: eventData.device || 'unknown',
@@ -414,7 +425,7 @@ class TrackingService {
     await Event.create({
       websiteId: websiteId,
       type: 'whatsapp_click',
-      source: this.getTrafficSource(eventData.source, eventData.referrer),
+      source: this.detectSource(eventData.source, eventData.referrer),
       country: geoData.country,
       city: geoData.city,
       device: eventData.device || 'unknown',
