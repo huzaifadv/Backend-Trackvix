@@ -119,9 +119,15 @@ const leadSchema = new mongoose.Schema({
   eventId: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'Event'
+  },
+  // Dynamic form fields - stores any extra fields from the form
+  customFields: {
+    type: mongoose.Schema.Types.Mixed,
+    default: {}
   }
 }, {
-  timestamps: true
+  timestamps: true,
+  strict: false  // Allow dynamic fields
 });
 
 // Compound indexes for efficient queries
