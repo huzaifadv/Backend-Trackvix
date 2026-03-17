@@ -392,7 +392,7 @@
       console.warn('[Tracker] Error extracting form data:', error);
     }
 
-    // Send event with extracted form data
+    // Send event with extracted form data (including custom fields)
     sendEvent({
       eventType: 'form_submit',
       data: {
@@ -402,7 +402,8 @@
         email: formData.email || undefined,
         phone: formData.phone || undefined,
         message: formData.message || undefined,
-        subject: formData.subject || formId
+        subject: formData.subject || formId,
+        ...formData  // ✅ Include ALL custom fields from formData
       }
     });
   }
