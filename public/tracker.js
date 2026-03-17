@@ -244,13 +244,26 @@
 
     try {
       // Case 1: Manual data object (for React Hook Form or custom tracking)
-      if (formIdOrEvent && typeof formIdOrEvent === 'object' && formIdOrEvent.name) {
+      // Check if this is a plain object with form data (not an Event object)
+      if (formIdOrEvent && typeof formIdOrEvent === 'object' &&
+          !formIdOrEvent.target && !formIdOrEvent.preventDefault &&
+          (formIdOrEvent.name || formIdOrEvent.email || formIdOrEvent.phone || formIdOrEvent.message)) {
+        // Direct data object - use it as-is
         formData.name = formIdOrEvent.name || null;
         formData.email = formIdOrEvent.email || null;
         formData.phone = formIdOrEvent.phone || null;
         formData.message = formIdOrEvent.message || null;
         formData.subject = formIdOrEvent.subject || null;
         formId = formIdOrEvent.formId || formIdOrEvent.formName || 'Contact Form';
+
+        console.log('[Tracker] Form data from object:', {
+          formId,
+          hasName: !!formData.name,
+          hasEmail: !!formData.email,
+          hasPhone: !!formData.phone,
+          hasMessage: !!formData.message,
+          hasSubject: !!formData.subject
+        });
       }
       // Case 2: Extract from form element
       else {
@@ -308,7 +321,7 @@
             }
           }
 
-          console.log('[Tracker] Form data extracted:', {
+          console.log('[Tracker] Form data extracted from elements:', {
             formId,
             hasName: !!formData.name,
             hasEmail: !!formData.email,
@@ -373,23 +386,30 @@
     }, true);
 
     // Track form submissions (Works for both HTML & React forms)
-    // We track on submit button click because React often prevents default submit event
-    const trackedForms = new WeakSet(); // Prevent duplicate tracking
+    // Use Map to store timestamp of last tracking to prevent duplicates
+    const formTrackingTimestamps = new WeakMap();
+    const DUPLICATE_THRESHOLD = 1000; // 1 second - prevent duplicates within this window
 
     // Method 1: Track submit button clicks (for React/SPA forms)
     document.addEventListener('click', function(e) {
       const submitButton = e.target.closest('button[type="submit"], input[type="submit"]');
       if (submitButton) {
         const form = submitButton.closest('form');
-        if (form && !trackedForms.has(form)) {
-          trackedForms.add(form);
-          const formId = form.id || form.name || form.className || 'unknown';
+        if (form) {
+          const now = Date.now();
+          const lastTracked = formTrackingTimestamps.get(form) || 0;
 
-          // Track immediately for React forms (they prevent default submit)
-          trackFormSubmit(formId);
+          // Only track if more than DUPLICATE_THRESHOLD has passed since last tracking
+          if (now - lastTracked > DUPLICATE_THRESHOLD) {
+            formTrackingTimestamps.set(form, now);
+            const formId = form.id || form.name || form.className || 'unknown';
 
-          // Reset after 2 seconds to allow re-submission tracking
-          setTimeout(() => trackedForms.delete(form), 2000);
+            // Track immediately for React forms (they prevent default submit)
+            console.log('[Tracker] Form submit tracked via button click');
+            trackFormSubmit(formId);
+          } else {
+            console.log('[Tracker] Duplicate form submit prevented (too soon after last submit)');
+          }
         }
       }
     }, true);
@@ -397,13 +417,20 @@
     // Method 2: Track traditional form submissions (HTML forms - backup)
     document.addEventListener('submit', function(e) {
       const form = e.target;
-      if (form.tagName === 'FORM' && !trackedForms.has(form)) {
-        trackedForms.add(form);
-        const formId = form.id || form.name || form.className || 'unknown';
-        trackFormSubmit(formId);
+      if (form.tagName === 'FORM') {
+        const now = Date.now();
+        const lastTracked = formTrackingTimestamps.get(form) || 0;
 
-        // Reset after 2 seconds
-        setTimeout(() => trackedForms.delete(form), 2000);
+        // Only track if more than DUPLICATE_THRESHOLD has passed since last tracking
+        if (now - lastTracked > DUPLICATE_THRESHOLD) {
+          formTrackingTimestamps.set(form, now);
+          const formId = form.id || form.name || form.className || 'unknown';
+
+          console.log('[Tracker] Form submit tracked via submit event');
+          trackFormSubmit(formId);
+        } else {
+          console.log('[Tracker] Duplicate form submit prevented (already tracked via button click)');
+        }
       }
     }, true);
   }

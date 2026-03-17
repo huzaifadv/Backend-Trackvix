@@ -47,6 +47,22 @@ const websiteSchema = new mongoose.Schema(
         default: 0,
       },
     },
+    // Webhook configuration for form submissions
+    webhookUrl: {
+      type: String,
+      trim: true,
+      validate: {
+        validator: function(v) {
+          if (!v) return true; // Optional field
+          return /^https?:\/\/.+/.test(v);
+        },
+        message: 'Webhook URL must be a valid HTTP/HTTPS URL'
+      }
+    },
+    webhookEnabled: {
+      type: Boolean,
+      default: false
+    },
   },
   {
     timestamps: true,

@@ -224,11 +224,44 @@ class TrackingService {
   }
 
   /**
+   * Send webhook notification for lead
+   */
+  static async sendWebhook(webhookUrl, leadData) {
+    const axios = require('axios');
+    const logger = require('../config/logger');
+
+    try {
+      const response = await axios.post(webhookUrl, leadData, {
+        headers: {
+          'Content-Type': 'application/json',
+          'User-Agent': 'Website-Tracker-Webhook/1.0'
+        },
+        timeout: 5000 // 5 second timeout
+      });
+
+      logger.info('Webhook sent successfully:', {
+        url: webhookUrl,
+        status: response.status,
+        leadId: leadData._id
+      });
+
+      return { success: true, status: response.status };
+    } catch (error) {
+      logger.error('Webhook failed:', {
+        url: webhookUrl,
+        error: error.message,
+        leadId: leadData._id
+      });
+      return { success: false, error: error.message };
+    }
+  }
+
+  /**
    * Create a Lead document from event data
    */
   static async createLeadFromEvent(websiteId, eventType, eventData, ip, userAgent, eventId = null) {
     try {
-      const website = await Website.findById(websiteId).select('userId');
+      const website = await Website.findById(websiteId).select('userId webhookUrl webhookEnabled');
       if (!website) {
         throw new Error('Website not found');
       }
@@ -286,6 +319,42 @@ class TrackingService {
       const lead = await Lead.create(leadData);
       const logger = require('../config/logger');
       logger.info('Lead created:', { leadId: lead._id, eventType, websiteId });
+
+      // Send webhook if enabled (only for form submissions and call clicks)
+      if (website.webhookEnabled && website.webhookUrl && ['form_submit', 'call_click'].includes(eventType)) {
+        // Prepare webhook payload
+        const webhookPayload = {
+          event: 'lead.created',
+          timestamp: new Date().toISOString(),
+          lead: {
+            id: lead._id.toString(),
+            name: lead.name,
+            email: lead.email,
+            phone: lead.phone,
+            message: lead.message,
+            subject: lead.subject,
+            formName: lead.formName,
+            eventType: lead.eventType,
+            source: lead.source,
+            device: lead.device,
+            browser: lead.browser,
+            country: lead.country,
+            city: lead.city,
+            pageUrl: lead.pageUrl,
+            referrer: lead.referrer,
+            createdAt: lead.createdAt
+          },
+          website: {
+            id: websiteId.toString(),
+            domain: eventData.url ? new URL(eventData.url).hostname : 'unknown'
+          }
+        };
+
+        // Send webhook asynchronously (don't wait for response)
+        this.sendWebhook(website.webhookUrl, webhookPayload).catch(err => {
+          logger.error('Webhook send failed:', err);
+        });
+      }
 
       return lead;
     } catch (error) {
