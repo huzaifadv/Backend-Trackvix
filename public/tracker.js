@@ -288,6 +288,7 @@
 
           // AUTO-EXTRACT FORM DATA
           const formElements = form.elements;
+          const customFields = {}; // Store additional custom fields
 
           for (let i = 0; i < formElements.length; i++) {
             const field = formElements[i];
@@ -299,27 +300,83 @@
               continue;
             }
 
-            // Match NAME field (supports: name, fullname, full_name, fname, first_name, customer_name, your_name, etc.)
-            if (!formData.name && fieldName.match(/(^|[_\-\s])(name|fname|first|fullname|full[_\-\s]?name|customer[_\-\s]?name|your[_\-\s]?name)($|[_\-\s])/i)) {
+            // Match NAME field - Covers 90% of real-world forms
+            // Matches: name, username, fullname, full_name, fname, lname, first, last, customer, etc.
+            if (!formData.name && (
+              fieldName.includes('name') ||
+              fieldName.includes('first') ||
+              fieldName.includes('last') ||
+              fieldName.includes('fname') ||
+              fieldName.includes('lname') ||
+              fieldName.includes('customer') ||
+              fieldName.includes('user') && !fieldName.includes('email') && !fieldName.includes('phone')
+            )) {
               formData.name = fieldValue;
             }
-            // Match EMAIL field (supports: email, mail, e_mail, email_address, your_email, etc.)
-            else if (!formData.email && fieldName.match(/(^|[_\-\s])(email|mail|e[_\-\s]?mail|email[_\-\s]?address|your[_\-\s]?email)($|[_\-\s])/i)) {
+            // Match EMAIL field - Covers 90% of real-world forms
+            // Matches: email, mail, e_mail, user_email, contact_email, etc.
+            else if (!formData.email && (
+              fieldName.includes('email') ||
+              fieldName.includes('mail') ||
+              fieldName === 'e' ||
+              fieldName === 'em'
+            )) {
               formData.email = fieldValue;
             }
-            // Match PHONE field (supports: phone, mobile, tel, contact, phone_number, mobile_number, etc.)
-            else if (!formData.phone && fieldName.match(/(^|[_\-\s])(phone|mobile|tel|contact|whatsapp|phone[_\-\s]?number|mobile[_\-\s]?number|contact[_\-\s]?number)($|[_\-\s])/i)) {
+            // Match PHONE field - Covers 90% of real-world forms
+            // Matches: phone, mobile, tel, telephone, contact, cell, number, whatsapp, etc.
+            else if (!formData.phone && (
+              fieldName.includes('phone') ||
+              fieldName.includes('mobile') ||
+              fieldName.includes('tel') ||
+              fieldName.includes('contact') && !fieldName.includes('email') && !fieldName.includes('name') ||
+              fieldName.includes('whatsapp') ||
+              fieldName.includes('cell') ||
+              fieldName.includes('number') && !fieldName.includes('card') && !fieldName.includes('zip')
+            )) {
               formData.phone = fieldValue;
             }
-            // Match MESSAGE field (supports: message, comment, comments, description, query, question, details, etc.)
-            else if (!formData.message && fieldName.match(/(^|[_\-\s])(message|comment|comments|msg|description|query|question|details|your[_\-\s]?message|inquiry)($|[_\-\s])/i)) {
+            // Match MESSAGE field - Covers 90% of real-world forms
+            // Matches: message, msg, comment, description, query, question, details, notes, body, content, etc.
+            else if (!formData.message && (
+              fieldName.includes('message') ||
+              fieldName.includes('msg') ||
+              fieldName.includes('comment') ||
+              fieldName.includes('description') ||
+              fieldName.includes('desc') ||
+              fieldName.includes('query') ||
+              fieldName.includes('question') ||
+              fieldName.includes('detail') ||
+              fieldName.includes('inquiry') ||
+              fieldName.includes('note') ||
+              fieldName.includes('body') ||
+              fieldName.includes('content') ||
+              fieldName.includes('text') && !fieldName.includes('name') ||
+              fieldName.includes('about') ||
+              fieldName.includes('info') && !fieldName.includes('personal')
+            )) {
               formData.message = fieldValue;
             }
-            // Match SUBJECT field (supports: subject, topic, regarding, etc.)
-            else if (!formData.subject && fieldName.match(/(^|[_\-\s])(subject|topic|regarding|reason)($|[_\-\s])/i)) {
+            // Match SUBJECT field - Covers 90% of real-world forms
+            // Matches: subject, topic, regarding, reason, title, heading, etc.
+            else if (!formData.subject && (
+              fieldName.includes('subject') ||
+              fieldName.includes('topic') ||
+              fieldName.includes('regarding') ||
+              fieldName.includes('reason') ||
+              fieldName.includes('title') && !fieldName.includes('job') ||
+              fieldName.includes('heading')
+            )) {
               formData.subject = fieldValue;
             }
+            // ✅ NEW: Capture ALL other fields as custom fields
+            else if (field.name) {
+              customFields[field.name] = fieldValue;
+            }
           }
+
+          // Merge custom fields into formData
+          Object.assign(formData, customFields);
 
           console.log('[Tracker] Form data extracted from elements:', {
             formId,

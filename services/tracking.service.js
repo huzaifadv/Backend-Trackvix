@@ -291,6 +291,19 @@ class TrackingService {
         else if (deviceLower === 'desktop') deviceValue = 'Desktop';
       }
 
+      // Extract custom fields (any fields not in standard list)
+      const standardFields = ['name', 'email', 'phone', 'phoneNumber', 'message', 'subject',
+                              'formName', 'formId', 'url', 'referrer', 'device', 'source',
+                              'utm_source', 'utm_campaign', 'visitorId', 'pagesVisited',
+                              'eventType', 'timestamp', 'isNewVisitor', 'apiKey'];
+
+      const customFields = {};
+      for (const key in eventData) {
+        if (eventData.hasOwnProperty(key) && !standardFields.includes(key)) {
+          customFields[key] = eventData[key];
+        }
+      }
+
       const leadData = {
         websiteId,
         userId: website.userId,
@@ -313,7 +326,9 @@ class TrackingService {
         pageUrl: eventData.url,
         referrer: eventData.referrer,
         visitorFingerprint: eventData.visitorId,
-        pagesVisited: eventData.pagesVisited || []
+        pagesVisited: eventData.pagesVisited || [],
+        // ✅ NEW: Custom fields
+        customFields: customFields
       };
 
       const lead = await Lead.create(leadData);
