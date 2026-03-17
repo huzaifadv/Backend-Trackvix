@@ -392,6 +392,13 @@
       console.warn('[Tracker] Error extracting form data:', error);
     }
 
+    // ✅ Validate: Don't send if no meaningful data (prevents empty submissions)
+    const hasData = formData.name || formData.email || formData.phone || formData.message;
+    if (!hasData) {
+      console.log('[Tracker] Form submit skipped - no meaningful data captured');
+      return;
+    }
+
     // Send event with extracted form data (including custom fields)
     sendEvent({
       eventType: 'form_submit',
@@ -446,14 +453,14 @@
     // Track form submissions (Works for both HTML & React forms)
     // Use Map to store timestamp of last tracking to prevent duplicates
     const formTrackingTimestamps = new WeakMap();
-    const DUPLICATE_THRESHOLD = 1000; // 1 second - prevent duplicates within this window
+    const DUPLICATE_THRESHOLD = 3000; // 3 seconds - prevent duplicates within this window
 
     // Method 1: Track submit button clicks (for React/SPA forms)
     document.addEventListener('click', function(e) {
       const submitButton = e.target.closest('button[type="submit"], input[type="submit"]');
       if (submitButton) {
         const form = submitButton.closest('form');
-        if (form) {
+        if (form && !form.hasAttribute('data-no-track')) {
           const now = Date.now();
           const lastTracked = formTrackingTimestamps.get(form) || 0;
 
@@ -475,7 +482,7 @@
     // Method 2: Track traditional form submissions (HTML forms - backup)
     document.addEventListener('submit', function(e) {
       const form = e.target;
-      if (form.tagName === 'FORM') {
+      if (form.tagName === 'FORM' && !form.hasAttribute('data-no-track')) {
         const now = Date.now();
         const lastTracked = formTrackingTimestamps.get(form) || 0;
 
