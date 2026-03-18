@@ -150,39 +150,24 @@
       fieldCount: Object.keys(payload).length
     });
 
-    // ✅ Use sendBeacon for form submissions (guaranteed delivery even during page unload)
-    // sendBeacon is synchronous and doesn't block page navigation
-    if (eventData.eventType === 'form_submit' && navigator.sendBeacon) {
-      const blob = new Blob([JSON.stringify(payload)], { type: 'application/json' });
-      const sent = navigator.sendBeacon(apiEndpoint, blob);
-      if (sent) {
-        console.log('[Tracker] Event sent via sendBeacon (guaranteed delivery)');
-      } else {
-        console.warn('[Tracker] sendBeacon failed, falling back to fetch');
-        // Fallback to fetch with keepalive
-        sendViaFetch(payload);
-      }
-    } else {
-      // Use fetch for other events
-      sendViaFetch(payload);
-    }
-  }
-
-  /**
-   * Send event via fetch API (with keepalive for reliability)
-   */
-  function sendViaFetch(payload) {
+    // Use fetch with keepalive for reliable delivery
     fetch(apiEndpoint, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(payload),
-      keepalive: true
+      keepalive: true // Ensures request completes even if page unloads
     })
     .then(response => {
       if (response.ok) {
-        console.log('[Tracker] Event tracked successfully via fetch');
+        console.log('[Tracker] Event tracked successfully');
+        return response.json();
       } else {
-        console.error('[Tracker] Tracking error - response not OK');
+        console.error('[Tracker] Tracking error - status:', response.status);
+      }
+    })
+    .then(data => {
+      if (data) {
+        console.log('[Tracker] Server response:', data);
       }
     })
     .catch(error => {
