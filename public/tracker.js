@@ -254,9 +254,11 @@
 
     try {
       // Case 1: Manual data object (for React Hook Form or custom tracking)
-      // Check if this is a plain object with form data (not an Event object)
+      // Check if this is a plain object with form data (not an Event object or HTMLFormElement)
       if (formIdOrEvent && typeof formIdOrEvent === 'object' &&
           !formIdOrEvent.target && !formIdOrEvent.preventDefault &&
+          formIdOrEvent.tagName !== 'FORM' && // ✅ Exclude HTMLFormElement
+          !formIdOrEvent.elements && // ✅ Exclude form elements collection
           (formIdOrEvent.name || formIdOrEvent.email || formIdOrEvent.phone || formIdOrEvent.message)) {
         // Direct data object - capture ALL fields
         for (const key in formIdOrEvent) {
