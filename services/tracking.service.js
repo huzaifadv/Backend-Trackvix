@@ -335,9 +335,9 @@ class TrackingService {
       const logger = require('../config/logger');
       logger.info('Lead created:', { leadId: lead._id, eventType, websiteId });
 
-      // Send webhook if enabled (only for form submissions and call clicks)
-      if (website.webhookEnabled && website.webhookUrl && ['form_submit', 'call_click'].includes(eventType)) {
-        // Prepare webhook payload
+      // Send webhook if enabled (ONLY for form submissions)
+      if (website.webhookEnabled && website.webhookUrl && eventType === 'form_submit') {
+        // Prepare webhook payload with ALL custom fields
         const webhookPayload = {
           event: 'lead.created',
           timestamp: new Date().toISOString(),
@@ -357,7 +357,11 @@ class TrackingService {
             city: lead.city,
             pageUrl: lead.pageUrl,
             referrer: lead.referrer,
-            createdAt: lead.createdAt
+            createdAt: lead.createdAt,
+            // ✅ NEW: Include ALL custom fields
+            customFields: lead.customFields || {},
+            // ✅ Also spread all custom fields at root level for easy access
+            ...lead.customFields
           },
           website: {
             id: websiteId.toString(),
