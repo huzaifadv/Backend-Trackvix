@@ -234,13 +234,7 @@
    */
   function trackFormSubmit(formIdOrEvent) {
     let formId = 'Contact Form';
-    let formData = {
-      name: null,
-      email: null,
-      phone: null,
-      message: null,
-      subject: null
-    };
+    let formData = {};
 
     try {
       // Case 1: Manual data object (for React Hook Form or custom tracking)
@@ -248,21 +242,22 @@
       if (formIdOrEvent && typeof formIdOrEvent === 'object' &&
           !formIdOrEvent.target && !formIdOrEvent.preventDefault &&
           (formIdOrEvent.name || formIdOrEvent.email || formIdOrEvent.phone || formIdOrEvent.message)) {
-        // Direct data object - use it as-is
-        formData.name = formIdOrEvent.name || null;
-        formData.email = formIdOrEvent.email || null;
-        formData.phone = formIdOrEvent.phone || null;
-        formData.message = formIdOrEvent.message || null;
-        formData.subject = formIdOrEvent.subject || null;
+        // Direct data object - capture ALL fields
+        for (const key in formIdOrEvent) {
+          if (formIdOrEvent.hasOwnProperty(key) && key !== 'formId' && key !== 'formName') {
+            const value = formIdOrEvent[key];
+            // Only include non-empty strings, numbers, and booleans
+            if (value !== null && value !== undefined && value !== '') {
+              formData[key] = value;
+            }
+          }
+        }
         formId = formIdOrEvent.formId || formIdOrEvent.formName || 'Contact Form';
 
         console.log('[Tracker] Form data from object:', {
           formId,
-          hasName: !!formData.name,
-          hasEmail: !!formData.email,
-          hasPhone: !!formData.phone,
-          hasMessage: !!formData.message,
-          hasSubject: !!formData.subject
+          fields: Object.keys(formData),
+          fieldCount: Object.keys(formData).length
         });
       }
       // Case 2: Extract from form element
@@ -286,105 +281,32 @@
           // Extract form identifier
           formId = form.id || form.name || form.getAttribute('data-form-name') || 'Contact Form';
 
-          // AUTO-EXTRACT FORM DATA
+          // AUTO-EXTRACT ALL FORM DATA
           const formElements = form.elements;
-          const customFields = {}; // Store additional custom fields
 
           for (let i = 0; i < formElements.length; i++) {
             const field = formElements[i];
-            const fieldName = (field.name || field.id || '').toLowerCase();
+            const fieldName = field.name || field.id;
             const fieldValue = field.value ? field.value.trim() : '';
 
-            // Skip empty fields, buttons, and submit elements
-            if (!fieldValue || field.type === 'submit' || field.type === 'button' || field.type === 'reset') {
+            // Skip empty fields, buttons, submit elements, and fields without names
+            if (!fieldName || !fieldValue || field.type === 'submit' || field.type === 'button' || field.type === 'reset') {
               continue;
             }
 
-            // Match NAME field - Covers 90% of real-world forms
-            // Matches: name, username, fullname, full_name, fname, lname, first, last, customer, etc.
-            if (!formData.name && (
-              fieldName.includes('name') ||
-              fieldName.includes('first') ||
-              fieldName.includes('last') ||
-              fieldName.includes('fname') ||
-              fieldName.includes('lname') ||
-              fieldName.includes('customer') ||
-              fieldName.includes('user') && !fieldName.includes('email') && !fieldName.includes('phone')
-            )) {
-              formData.name = fieldValue;
+            // Skip password and file input fields for security
+            if (field.type === 'password' || field.type === 'file') {
+              continue;
             }
-            // Match EMAIL field - Covers 90% of real-world forms
-            // Matches: email, mail, e_mail, user_email, contact_email, etc.
-            else if (!formData.email && (
-              fieldName.includes('email') ||
-              fieldName.includes('mail') ||
-              fieldName === 'e' ||
-              fieldName === 'em'
-            )) {
-              formData.email = fieldValue;
-            }
-            // Match PHONE field - Covers 90% of real-world forms
-            // Matches: phone, mobile, tel, telephone, contact, cell, number, whatsapp, etc.
-            else if (!formData.phone && (
-              fieldName.includes('phone') ||
-              fieldName.includes('mobile') ||
-              fieldName.includes('tel') ||
-              fieldName.includes('contact') && !fieldName.includes('email') && !fieldName.includes('name') ||
-              fieldName.includes('whatsapp') ||
-              fieldName.includes('cell') ||
-              fieldName.includes('number') && !fieldName.includes('card') && !fieldName.includes('zip')
-            )) {
-              formData.phone = fieldValue;
-            }
-            // Match MESSAGE field - Covers 90% of real-world forms
-            // Matches: message, msg, comment, description, query, question, details, notes, body, content, etc.
-            else if (!formData.message && (
-              fieldName.includes('message') ||
-              fieldName.includes('msg') ||
-              fieldName.includes('comment') ||
-              fieldName.includes('description') ||
-              fieldName.includes('desc') ||
-              fieldName.includes('query') ||
-              fieldName.includes('question') ||
-              fieldName.includes('detail') ||
-              fieldName.includes('inquiry') ||
-              fieldName.includes('note') ||
-              fieldName.includes('body') ||
-              fieldName.includes('content') ||
-              fieldName.includes('text') && !fieldName.includes('name') ||
-              fieldName.includes('about') ||
-              fieldName.includes('info') && !fieldName.includes('personal')
-            )) {
-              formData.message = fieldValue;
-            }
-            // Match SUBJECT field - Covers 90% of real-world forms
-            // Matches: subject, topic, regarding, reason, title, heading, etc.
-            else if (!formData.subject && (
-              fieldName.includes('subject') ||
-              fieldName.includes('topic') ||
-              fieldName.includes('regarding') ||
-              fieldName.includes('reason') ||
-              fieldName.includes('title') && !fieldName.includes('job') ||
-              fieldName.includes('heading')
-            )) {
-              formData.subject = fieldValue;
-            }
-            // ✅ NEW: Capture ALL other fields as custom fields
-            else if (field.name) {
-              customFields[field.name] = fieldValue;
-            }
-          }
 
-          // Merge custom fields into formData
-          Object.assign(formData, customFields);
+            // Capture the field (use original name/id, not lowercase)
+            formData[fieldName] = fieldValue;
+          }
 
           console.log('[Tracker] Form data extracted from elements:', {
             formId,
-            hasName: !!formData.name,
-            hasEmail: !!formData.email,
-            hasPhone: !!formData.phone,
-            hasMessage: !!formData.message,
-            hasSubject: !!formData.subject
+            fields: Object.keys(formData),
+            fieldCount: Object.keys(formData).length
           });
         }
       }
@@ -392,25 +314,19 @@
       console.warn('[Tracker] Error extracting form data:', error);
     }
 
-    // ✅ Validate: Don't send if no meaningful data (prevents empty submissions)
-    const hasData = formData.name || formData.email || formData.phone || formData.message;
-    if (!hasData) {
-      console.log('[Tracker] Form submit skipped - no meaningful data captured');
+    // ✅ Validate: Don't send if no data captured
+    if (Object.keys(formData).length === 0) {
+      console.log('[Tracker] Form submit skipped - no data captured');
       return;
     }
 
-    // Send event with extracted form data (including custom fields)
+    // Send event with ALL extracted form data
     sendEvent({
       eventType: 'form_submit',
       data: {
         formId: String(formId),
         formName: String(formId),
-        name: formData.name || 'Anonymous',
-        email: formData.email || undefined,
-        phone: formData.phone || undefined,
-        message: formData.message || undefined,
-        subject: formData.subject || formId,
-        ...formData  // ✅ Include ALL custom fields from formData
+        ...formData  // ✅ Include ALL form fields
       }
     });
   }
@@ -451,9 +367,66 @@
     }, true);
 
     // Track form submissions (Works for both HTML & React forms)
-    // Use Map to store timestamp of last tracking to prevent duplicates
-    const formTrackingTimestamps = new WeakMap();
-    const DUPLICATE_THRESHOLD = 3000; // 3 seconds - prevent duplicates within this window
+    // Use Map to store timestamp AND hash of last tracking to prevent duplicates
+    const formTrackingCache = new WeakMap();
+    const DUPLICATE_THRESHOLD = 1000; // 1 second - prevent duplicates within this window
+
+    /**
+     * Generate a simple hash of form data to detect identical submissions
+     */
+    function getFormDataHash(form) {
+      if (!form || !form.elements) return '';
+
+      const values = [];
+      for (let i = 0; i < form.elements.length; i++) {
+        const field = form.elements[i];
+        if (field.name && field.value && field.type !== 'submit' && field.type !== 'button') {
+          values.push(`${field.name}:${field.value}`);
+        }
+      }
+      return values.join('|');
+    }
+
+    /**
+     * Check if form submission is duplicate
+     */
+    function isDuplicateSubmission(form) {
+      const now = Date.now();
+      const cache = formTrackingCache.get(form);
+
+      if (!cache) {
+        return false; // First submission
+      }
+
+      const timeDiff = now - cache.timestamp;
+      const dataHash = getFormDataHash(form);
+
+      // Duplicate if:
+      // 1. Submitted within 1 second AND same data
+      // OR
+      // 2. Submitted within 500ms (React Strict Mode double-render protection)
+      if (timeDiff < 500) {
+        console.log('[Tracker] Duplicate prevented - React Strict Mode double-render detected');
+        return true;
+      }
+
+      if (timeDiff < DUPLICATE_THRESHOLD && dataHash === cache.dataHash) {
+        console.log('[Tracker] Duplicate prevented - same form data within threshold');
+        return true;
+      }
+
+      return false;
+    }
+
+    /**
+     * Mark form as tracked
+     */
+    function markFormTracked(form) {
+      formTrackingCache.set(form, {
+        timestamp: Date.now(),
+        dataHash: getFormDataHash(form)
+      });
+    }
 
     // Method 1: Track submit button clicks (for React/SPA forms)
     document.addEventListener('click', function(e) {
@@ -461,20 +434,20 @@
       if (submitButton) {
         const form = submitButton.closest('form');
         if (form && !form.hasAttribute('data-no-track')) {
-          const now = Date.now();
-          const lastTracked = formTrackingTimestamps.get(form) || 0;
 
-          // Only track if more than DUPLICATE_THRESHOLD has passed since last tracking
-          if (now - lastTracked > DUPLICATE_THRESHOLD) {
-            formTrackingTimestamps.set(form, now);
-            const formId = form.id || form.name || form.className || 'unknown';
-
-            // Track immediately for React forms (they prevent default submit)
-            console.log('[Tracker] Form submit tracked via button click');
-            trackFormSubmit(formId);
-          } else {
-            console.log('[Tracker] Duplicate form submit prevented (too soon after last submit)');
+          // Check for duplicate
+          if (isDuplicateSubmission(form)) {
+            return;
           }
+
+          // Mark as tracked BEFORE tracking to prevent race conditions
+          markFormTracked(form);
+
+          // Small delay to allow form data to settle (for React forms)
+          setTimeout(() => {
+            console.log('[Tracker] Form submit tracked via button click');
+            trackFormSubmit(form);
+          }, 100);
         }
       }
     }, true);
@@ -483,19 +456,17 @@
     document.addEventListener('submit', function(e) {
       const form = e.target;
       if (form.tagName === 'FORM' && !form.hasAttribute('data-no-track')) {
-        const now = Date.now();
-        const lastTracked = formTrackingTimestamps.get(form) || 0;
 
-        // Only track if more than DUPLICATE_THRESHOLD has passed since last tracking
-        if (now - lastTracked > DUPLICATE_THRESHOLD) {
-          formTrackingTimestamps.set(form, now);
-          const formId = form.id || form.name || form.className || 'unknown';
-
-          console.log('[Tracker] Form submit tracked via submit event');
-          trackFormSubmit(formId);
-        } else {
-          console.log('[Tracker] Duplicate form submit prevented (already tracked via button click)');
+        // Check for duplicate
+        if (isDuplicateSubmission(form)) {
+          return;
         }
+
+        // Mark as tracked
+        markFormTracked(form);
+
+        console.log('[Tracker] Form submit tracked via submit event');
+        trackFormSubmit(form);
       }
     }, true);
   }
