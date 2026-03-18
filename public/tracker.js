@@ -140,7 +140,38 @@
       }
     }
 
-    // Use fetch API for real-time tracking
+    // Log the payload being sent for debugging
+    console.log('[Tracker] Sending event:', {
+      eventType: payload.eventType,
+      formId: payload.formId,
+      name: payload.name,
+      email: payload.email,
+      phone: payload.phone,
+      fieldCount: Object.keys(payload).length
+    });
+
+    // ✅ Use sendBeacon for form submissions (guaranteed delivery even during page unload)
+    // sendBeacon is synchronous and doesn't block page navigation
+    if (eventData.eventType === 'form_submit' && navigator.sendBeacon) {
+      const blob = new Blob([JSON.stringify(payload)], { type: 'application/json' });
+      const sent = navigator.sendBeacon(apiEndpoint, blob);
+      if (sent) {
+        console.log('[Tracker] Event sent via sendBeacon (guaranteed delivery)');
+      } else {
+        console.warn('[Tracker] sendBeacon failed, falling back to fetch');
+        // Fallback to fetch with keepalive
+        sendViaFetch(payload);
+      }
+    } else {
+      // Use fetch for other events
+      sendViaFetch(payload);
+    }
+  }
+
+  /**
+   * Send event via fetch API (with keepalive for reliability)
+   */
+  function sendViaFetch(payload) {
     fetch(apiEndpoint, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -149,13 +180,13 @@
     })
     .then(response => {
       if (response.ok) {
-        console.log('Event tracked successfully');
+        console.log('[Tracker] Event tracked successfully via fetch');
       } else {
-        console.error('Tracking error');
+        console.error('[Tracker] Tracking error - response not OK');
       }
     })
     .catch(error => {
-      console.error('Tracking error:', error);
+      console.error('[Tracker] Tracking error:', error);
     });
   }
 
@@ -428,45 +459,28 @@
       });
     }
 
-    // Method 1: Track submit button clicks (for React/SPA forms)
-    document.addEventListener('click', function(e) {
-      const submitButton = e.target.closest('button[type="submit"], input[type="submit"]');
-      if (submitButton) {
-        const form = submitButton.closest('form');
-        if (form && !form.hasAttribute('data-no-track')) {
-
-          // Check for duplicate
-          if (isDuplicateSubmission(form)) {
-            return;
-          }
-
-          // Mark as tracked BEFORE tracking to prevent race conditions
-          markFormTracked(form);
-
-          // Small delay to allow form data to settle (for React forms)
-          setTimeout(() => {
-            console.log('[Tracker] Form submit tracked via button click');
-            trackFormSubmit(form);
-          }, 100);
-        }
-      }
-    }, true);
-
-    // Method 2: Track traditional form submissions (HTML forms - backup)
+    // Method 2: Track traditional form submissions (HTML forms - PRIMARY METHOD)
+    // This fires BEFORE page navigation, ensuring data capture
     document.addEventListener('submit', function(e) {
       const form = e.target;
       if (form.tagName === 'FORM' && !form.hasAttribute('data-no-track')) {
 
-        // Check for duplicate
+        // Check for duplicate (protects against double-submit)
         if (isDuplicateSubmission(form)) {
+          console.log('[Tracker] Duplicate form submission prevented');
           return;
         }
 
-        // Mark as tracked
+        console.log('[Tracker] Form submit event detected - tracking now');
+
+        // ✅ CAPTURE FORM DATA IMMEDIATELY (before any navigation)
+        trackFormSubmit(form);
+
+        // Mark as tracked AFTER sending (prevents race condition)
         markFormTracked(form);
 
-        console.log('[Tracker] Form submit tracked via submit event');
-        trackFormSubmit(form);
+        // ✅ Don't prevent default - let form submit naturally
+        // Form data already captured above
       }
     }, true);
   }
