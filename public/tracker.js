@@ -244,11 +244,25 @@
     });
   }
 
+  // Global flag to prevent simultaneous duplicate submissions
+  let _isCurrentlyTracking = false;
+  let _lastTrackingTimestamp = 0;
+
   /**
    * Track form submissions with automatic data extraction
    * @param {string|HTMLFormElement|Event|Object} formIdOrEvent - Form ID, form element, React event, or manual data object
    */
   function trackFormSubmit(formIdOrEvent) {
+    // ✅ SYNCHRONOUS DUPLICATE PREVENTION - Block if already tracking
+    const now = Date.now();
+    if (_isCurrentlyTracking || (now - _lastTrackingTimestamp) < 100) {
+      console.log('[Tracker] ⛔ Duplicate blocked - already tracking a submission (sync protection)');
+      return;
+    }
+
+    _isCurrentlyTracking = true;
+    _lastTrackingTimestamp = now;
+
     let formId = 'Contact Form';
     let formData = {};
     let isManualCall = false;
@@ -374,6 +388,11 @@
         ...formData  // ✅ Include ALL form fields
       }
     });
+
+    // ✅ Reset tracking flag after a short delay to allow this submission to complete
+    setTimeout(() => {
+      _isCurrentlyTracking = false;
+    }, 200);
   }
 
   /**
