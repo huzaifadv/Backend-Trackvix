@@ -292,15 +292,64 @@ class TrackingService {
       }
 
       // Extract custom fields (any fields not in standard list)
+      // ✅ WordPress metadata fields to remove
+      const WP_METADATA_FIELDS = [
+        'wpcf7', '_wpcf7', 'wpcf7_version', '_wpcf7_version', 'wpcf7_locale', '_wpcf7_locale',
+        'wpcf7_unit_tag', '_wpcf7_unit_tag', 'wpcf7_container_post', '_wpcf7_container_post',
+        'wpcf7_posted_data_hash', '_wpcf7_posted_data_hash', 'wpcf7_recaptcha_response',
+        'g-recaptcha-response', 'h-captcha-response', '_wpnonce', '_wp_http_referer',
+        'gform_submit', 'gform_unique_id', 'gform_target_page_number', 'gform_source_page_number',
+        'wpforms', 'wpforms-submit', 'wpforms_id', 'ninja_forms_field', 'nf_form_id'
+      ];
+
+      // ✅ Field name patterns for normalization (WordPress-specific)
+      const FIELD_PATTERNS = {
+        name: /^(your[-_]?name|user[-_]?name|contact[-_]?name|full[-_]?name|fname|customer[-_]?name)$/i,
+        email: /^(your[-_]?email|user[-_]?email|contact[-_]?email|email[-_]?address|e[-_]?mail)$/i,
+        phone: /^(your[-_]?phone|user[-_]?phone|contact[-_]?phone|telephone|tel|mobile|phone[-_]?number)$/i,
+        message: /^(your[-_]?message|user[-_]?message|comment|comments|description|details|inquiry)$/i,
+        subject: /^(your[-_]?subject|title|topic|regarding)$/i
+      };
+
+      // ✅ Normalize field names (map your-name → name, etc.)
+      const normalizedData = {};
+      for (const key in eventData) {
+        if (!eventData.hasOwnProperty(key)) continue;
+
+        const value = eventData[key];
+
+        // Skip empty or metadata fields
+        if (!value || WP_METADATA_FIELDS.includes(key)) continue;
+
+        // Check if field matches any standard pattern
+        let mapped = false;
+        for (const [standardField, pattern] of Object.entries(FIELD_PATTERNS)) {
+          if (pattern.test(key)) {
+            // Map to standard field (only if not already set)
+            if (!normalizedData[standardField]) {
+              normalizedData[standardField] = value;
+            }
+            mapped = true;
+            break;
+          }
+        }
+
+        // If not mapped, keep as custom field
+        if (!mapped) {
+          normalizedData[key] = value;
+        }
+      }
+
+      // Standard fields for custom field extraction
       const standardFields = ['name', 'email', 'phone', 'phoneNumber', 'message', 'subject',
                               'formName', 'formId', 'url', 'referrer', 'device', 'source',
                               'utm_source', 'utm_campaign', 'visitorId', 'pagesVisited',
                               'eventType', 'timestamp', 'isNewVisitor', 'apiKey'];
 
       const customFields = {};
-      for (const key in eventData) {
-        if (eventData.hasOwnProperty(key) && !standardFields.includes(key)) {
-          customFields[key] = eventData[key];
+      for (const key in normalizedData) {
+        if (normalizedData.hasOwnProperty(key) && !standardFields.includes(key)) {
+          customFields[key] = normalizedData[key];
         }
       }
 
@@ -309,12 +358,12 @@ class TrackingService {
         userId: website.userId,
         eventType,
         eventId,
-        // Contact info - Enhanced form tracking
-        name: eventData.name || 'Anonymous',
-        email: eventData.email || null,
-        phone: eventData.phone || eventData.phoneNumber || null,
-        message: eventData.message || null,
-        subject: eventData.subject || eventData.formName || eventData.formId || 'Contact Form',
+        // Contact info - Enhanced form tracking (using normalized data)
+        name: normalizedData.name || eventData.name || 'Anonymous',
+        email: normalizedData.email || eventData.email || null,
+        phone: normalizedData.phone || eventData.phone || eventData.phoneNumber || null,
+        message: normalizedData.message || eventData.message || null,
+        subject: normalizedData.subject || eventData.subject || eventData.formName || eventData.formId || 'Contact Form',
         formName: eventData.formName || eventData.formId || 'Contact Form',
         // Visitor intelligence
         source: sourceMap[source] || 'Direct',

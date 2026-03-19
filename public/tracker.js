@@ -36,9 +36,7 @@
     return;
   }
 
-  console.log('[Tracker] Script loaded successfully');
-  console.log('[Tracker] API Key:', apiKey.substring(0, 10) + '...');
-  console.log('[Tracker] API Endpoint:', apiEndpoint);
+  // Script loaded - ready to track
 
   /**
    * Check if this is a new visitor session
@@ -140,16 +138,6 @@
       }
     }
 
-    // Log the payload being sent for debugging
-    console.log('[Tracker] Sending event:', {
-      eventType: payload.eventType,
-      formId: payload.formId,
-      name: payload.name,
-      email: payload.email,
-      phone: payload.phone,
-      fieldCount: Object.keys(payload).length
-    });
-
     // Use fetch with keepalive for reliable delivery
     fetch(apiEndpoint, {
       method: 'POST',
@@ -158,20 +146,12 @@
       keepalive: true // Ensures request completes even if page unloads
     })
     .then(response => {
-      if (response.ok) {
-        console.log('[Tracker] Event tracked successfully');
-        return response.json();
-      } else {
-        console.error('[Tracker] Tracking error - status:', response.status);
-      }
-    })
-    .then(data => {
-      if (data) {
-        console.log('[Tracker] Server response:', data);
+      if (!response.ok) {
+        console.error('[Tracker] Error:', response.status);
       }
     })
     .catch(error => {
-      console.error('[Tracker] Tracking error:', error);
+      console.error('[Tracker] Error:', error);
     });
   }
 
@@ -183,31 +163,20 @@
   let visitorTracked = false;
   function trackVisitor() {
     // Only track visitor once per page load
-    if (visitorTracked) {
-      console.log('[Tracker] Visitor already tracked in this page load');
-      return;
-    }
+    if (visitorTracked) return;
 
     visitorTracked = true;
     const isNewSession = isNewVisitorSession();
 
-    console.log('[Tracker] Visitor session check:', {
-      isNewSession: isNewSession,
-      willTrack: isNewSession
-    });
-
     // Only send visitor event if this is truly a new session
     // This prevents counting the same visitor multiple times on page refresh
     if (isNewSession) {
-      console.log('[Tracker] New session detected - tracking visitor');
       // Send visitor event (backend will use IP to identify unique visitors)
       sendEvent({
         eventType: 'visitor',
         isNewVisitor: true,
         data: {}
       });
-    } else {
-      console.log('[Tracker] Existing session - visitor not tracked (already counted)');
     }
   }
 
@@ -256,8 +225,7 @@
     // ✅ SYNCHRONOUS DUPLICATE PREVENTION - Block if already tracking
     const now = Date.now();
     if (_isCurrentlyTracking || (now - _lastTrackingTimestamp) < 100) {
-      console.log('[Tracker] ⛔ Duplicate blocked - already tracking a submission (sync protection)');
-      return;
+      return; // Duplicate blocked
     }
 
     _isCurrentlyTracking = true;
@@ -265,7 +233,6 @@
 
     let formId = 'Contact Form';
     let formData = {};
-    let isManualCall = false;
 
     try {
       // Case 1: Manual data object (for React Hook Form or custom tracking)
@@ -276,7 +243,6 @@
           !formIdOrEvent.elements && // ✅ Exclude form elements collection
           (formIdOrEvent.name || formIdOrEvent.email || formIdOrEvent.phone || formIdOrEvent.message)) {
         // Direct data object - capture ALL fields
-        isManualCall = true;
         for (const key in formIdOrEvent) {
           if (formIdOrEvent.hasOwnProperty(key) && key !== 'formId' && key !== 'formName') {
             const value = formIdOrEvent[key];
@@ -287,12 +253,6 @@
           }
         }
         formId = formIdOrEvent.formId || formIdOrEvent.formName || 'Contact Form';
-
-        console.log('[Tracker] Form data from object (manual call):', {
-          formId,
-          fields: Object.keys(formData),
-          fieldCount: Object.keys(formData).length
-        });
       }
       // Case 2: Extract from form element
       else {
@@ -336,12 +296,6 @@
             // Capture the field (use original name/id, not lowercase)
             formData[fieldName] = fieldValue;
           }
-
-          console.log('[Tracker] Form data extracted from elements:', {
-            formId,
-            fields: Object.keys(formData),
-            fieldCount: Object.keys(formData).length
-          });
         }
       }
     } catch (error) {
@@ -350,7 +304,6 @@
 
     // ✅ Validate: Don't send if no data captured
     if (Object.keys(formData).length === 0) {
-      console.log('[Tracker] Form submit skipped - no data captured');
       return;
     }
 
@@ -362,8 +315,7 @@
     if (window._formTrackingCache) {
       const lastTracked = window._formTrackingCache.get(trackingKey);
       if (lastTracked && (now - lastTracked) < 2000) { // 2 second window
-        console.log('[Tracker] Duplicate form submission prevented (same data within 2s)');
-        return;
+        return; // Duplicate
       }
     } else {
       window._formTrackingCache = new Map();
@@ -466,16 +418,13 @@
       const dataHash = getFormDataHash(form);
 
       // Duplicate if:
-      // 1. Submitted within 1 second AND same data
-      // OR
-      // 2. Submitted within 500ms (React Strict Mode double-render protection)
+      // 1. Submitted within 500ms (React Strict Mode protection)
+      // 2. Submitted within 1 second AND same data
       if (timeDiff < 500) {
-        console.log('[Tracker] Duplicate prevented - React Strict Mode double-render detected');
         return true;
       }
 
       if (timeDiff < DUPLICATE_THRESHOLD && dataHash === cache.dataHash) {
-        console.log('[Tracker] Duplicate prevented - same form data within threshold');
         return true;
       }
 
@@ -500,11 +449,8 @@
 
         // Check for duplicate (protects against double-submit)
         if (isDuplicateSubmission(form)) {
-          console.log('[Tracker] Duplicate form submission prevented (WeakMap protection)');
           return;
         }
-
-        console.log('[Tracker] Form submit event detected - tracking via auto-listener');
 
         // ✅ CAPTURE FORM DATA IMMEDIATELY (before any navigation)
         trackFormSubmit(form);
