@@ -356,7 +356,7 @@
 
     // ✅ Create unique tracking key for duplicate prevention
     const trackingKey = `${formId}_${JSON.stringify(formData)}`;
-    const now = Date.now();
+    // Reuse 'now' from above (line 257) - already declared
 
     // Check if this exact submission was already tracked recently
     if (window._formTrackingCache) {
