@@ -292,59 +292,15 @@ class TrackingService {
       }
 
       // Extract custom fields (any fields not in standard list)
-      // ✅ WordPress metadata fields to remove
-      const WP_METADATA_FIELDS = [
-        'wpcf7', '_wpcf7', 'wpcf7_version', '_wpcf7_version', 'wpcf7_locale', '_wpcf7_locale',
-        'wpcf7_unit_tag', '_wpcf7_unit_tag', 'wpcf7_container_post', '_wpcf7_container_post',
-        'wpcf7_posted_data_hash', '_wpcf7_posted_data_hash', 'wpcf7_recaptcha_response',
-        'g-recaptcha-response', 'h-captcha-response', '_wpnonce', '_wp_http_referer',
-        'gform_submit', 'gform_unique_id', 'gform_target_page_number', 'gform_source_page_number',
-        'wpforms', 'wpforms-submit', 'wpforms_id', 'ninja_forms_field', 'nf_form_id'
-      ];
+      const standardFields = ['name', 'email', 'phone', 'phoneNumber', 'message', 'subject',
+                              'formName', 'formId', 'url', 'referrer', 'device', 'source',
+                              'utm_source', 'utm_campaign', 'visitorId', 'pagesVisited',
+                              'eventType', 'timestamp', 'isNewVisitor', 'apiKey'];
 
-      // ✅ Simple helper to check if field name contains pattern (case-insensitive)
-      const containsPattern = (fieldName, patterns) => {
-        const lower = fieldName.toLowerCase();
-        return patterns.some(pattern => lower.includes(pattern));
-      };
-
-      // ✅ Extract and normalize all fields
-      const normalizedData = {};
       const customFields = {};
-
       for (const key in eventData) {
-        if (!eventData.hasOwnProperty(key)) continue;
-
-        const value = eventData[key];
-
-        // Skip empty values and WordPress metadata
-        if (!value || value === '' || WP_METADATA_FIELDS.includes(key)) continue;
-
-        const lowerKey = key.toLowerCase();
-
-        // Smart field mapping based on field name content
-        if (containsPattern(lowerKey, ['name', 'fullname', 'fname'])) {
-          if (!normalizedData.name) normalizedData.name = value;
-        } else if (containsPattern(lowerKey, ['email', 'e-mail', 'mail'])) {
-          if (!normalizedData.email) normalizedData.email = value;
-        } else if (containsPattern(lowerKey, ['phone', 'tel', 'mobile', 'cell'])) {
-          if (!normalizedData.phone) normalizedData.phone = value;
-        } else if (containsPattern(lowerKey, ['message', 'comment', 'description', 'inquiry'])) {
-          if (!normalizedData.message) normalizedData.message = value;
-        } else if (containsPattern(lowerKey, ['subject', 'title', 'topic'])) {
-          if (!normalizedData.subject) normalizedData.subject = value;
-        } else if (containsPattern(lowerKey, ['service'])) {
-          if (!normalizedData.service) normalizedData.service = value;
-        } else if (containsPattern(lowerKey, ['address', 'location', 'city'])) {
-          if (!normalizedData.address) normalizedData.address = value;
-        } else if (containsPattern(lowerKey, ['website', 'site', 'url']) && lowerKey !== 'url' && lowerKey !== 'referrer') {
-          if (!normalizedData.website) normalizedData.website = value;
-        } else if (containsPattern(lowerKey, ['company', 'organization', 'business'])) {
-          if (!normalizedData.company) normalizedData.company = value;
-        } else {
-          // Keep as custom field (but clean the name - remove "your-" prefix)
-          const cleanKey = key.replace(/^your[-_]?/i, '');
-          customFields[cleanKey] = value;
+        if (eventData.hasOwnProperty(key) && !standardFields.includes(key)) {
+          customFields[key] = eventData[key];
         }
       }
 
@@ -353,18 +309,13 @@ class TrackingService {
         userId: website.userId,
         eventType,
         eventId,
-        // Contact info - Enhanced form tracking (using normalized data)
-        name: normalizedData.name || eventData.name || 'Anonymous',
-        email: normalizedData.email || eventData.email || null,
-        phone: normalizedData.phone || eventData.phone || eventData.phoneNumber || null,
-        message: normalizedData.message || eventData.message || null,
-        subject: normalizedData.subject || eventData.subject || eventData.formName || eventData.formId || 'Contact Form',
+        // Contact info - Enhanced form tracking
+        name: eventData.name || 'Anonymous',
+        email: eventData.email || null,
+        phone: eventData.phone || eventData.phoneNumber || null,
+        message: eventData.message || null,
+        subject: eventData.subject || eventData.formName || eventData.formId || 'Contact Form',
         formName: eventData.formName || eventData.formId || 'Contact Form',
-        // Additional normalized fields
-        service: normalizedData.service || null,
-        address: normalizedData.address || null,
-        website: normalizedData.website || null,
-        company: normalizedData.company || null,
         // Visitor intelligence
         source: sourceMap[source] || 'Direct',
         device: deviceValue,
