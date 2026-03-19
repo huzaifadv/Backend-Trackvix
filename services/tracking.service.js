@@ -304,16 +304,16 @@ class TrackingService {
 
       // ✅ Field name patterns for normalization (WordPress-specific)
       const FIELD_PATTERNS = {
-        name: /^(your[-_]?name|user[-_]?name|contact[-_]?name|full[-_]?name|fname|customer[-_]?name)$/i,
-        email: /^(your[-_]?email|user[-_]?email|contact[-_]?email|email[-_]?address|e[-_]?mail)$/i,
-        phone: /^(your[-_]?phone|user[-_]?phone|contact[-_]?phone|telephone|tel|mobile|phone[-_]?number)$/i,
-        message: /^(your[-_]?message|user[-_]?message|comment|comments|description|details|inquiry)$/i,
-        subject: /^(your[-_]?subject|title|topic|regarding)$/i,
+        name: /(^|[-_])(your[-_]?)?(name|fullname|full[-_]?name|fname|first[-_]?name|customer|username|user[-_]?name|contact[-_]?name)$/i,
+        email: /(^|[-_])(your[-_]?)?(email|e[-_]?mail|mail|email[-_]?address|user[-_]?email|contact[-_]?email)$/i,
+        phone: /(^|[-_])(your[-_]?)?(phone|tel|telephone|mobile|cell|phone[-_]?number|tel[-_]?number|contact[-_]?phone|user[-_]?phone)$/i,
+        message: /(^|[-_])(your[-_]?)?(message|comment|comments|description|details|inquiry|question|body|content|text)$/i,
+        subject: /(^|[-_])(your[-_]?)?(subject|title|topic|regarding|about)$/i,
         // Additional common fields
-        service: /^(your[-_]?service|service[-_]?required|service[-_]?type)$/i,
-        address: /^(your[-_]?address|contact[-_]?address|street[-_]?address|location)$/i,
-        website: /^(your[-_]?website|website[-_]?url|site[-_]?url|url)$/i,
-        company: /^(your[-_]?company|company[-_]?name|organization|business[-_]?name)$/i
+        service: /(^|[-_])(your[-_]?)?(service|services|service[-_]?type|service[-_]?required)$/i,
+        address: /(^|[-_])(your[-_]?)?(address|location|street|city|area|contact[-_]?address)$/i,
+        website: /(^|[-_])(your[-_]?)?(website|site|url|website[-_]?url|site[-_]?url|web)$/i,
+        company: /(^|[-_])(your[-_]?)?(company|organization|business|company[-_]?name|org)$/i
       };
 
       // ✅ Normalize field names (map your-name → name, etc.)
