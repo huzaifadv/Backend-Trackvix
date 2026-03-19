@@ -251,6 +251,7 @@
   function trackFormSubmit(formIdOrEvent) {
     let formId = 'Contact Form';
     let formData = {};
+    let isManualCall = false;
 
     try {
       // Case 1: Manual data object (for React Hook Form or custom tracking)
@@ -261,6 +262,7 @@
           !formIdOrEvent.elements && // ✅ Exclude form elements collection
           (formIdOrEvent.name || formIdOrEvent.email || formIdOrEvent.phone || formIdOrEvent.message)) {
         // Direct data object - capture ALL fields
+        isManualCall = true;
         for (const key in formIdOrEvent) {
           if (formIdOrEvent.hasOwnProperty(key) && key !== 'formId' && key !== 'formName') {
             const value = formIdOrEvent[key];
@@ -272,7 +274,7 @@
         }
         formId = formIdOrEvent.formId || formIdOrEvent.formName || 'Contact Form';
 
-        console.log('[Tracker] Form data from object:', {
+        console.log('[Tracker] Form data from object (manual call):', {
           formId,
           fields: Object.keys(formData),
           fieldCount: Object.keys(formData).length
@@ -336,6 +338,31 @@
     if (Object.keys(formData).length === 0) {
       console.log('[Tracker] Form submit skipped - no data captured');
       return;
+    }
+
+    // ✅ Create unique tracking key for duplicate prevention
+    const trackingKey = `${formId}_${JSON.stringify(formData)}`;
+    const now = Date.now();
+
+    // Check if this exact submission was already tracked recently
+    if (window._formTrackingCache) {
+      const lastTracked = window._formTrackingCache.get(trackingKey);
+      if (lastTracked && (now - lastTracked) < 2000) { // 2 second window
+        console.log('[Tracker] Duplicate form submission prevented (same data within 2s)');
+        return;
+      }
+    } else {
+      window._formTrackingCache = new Map();
+    }
+
+    // Mark this submission as tracked
+    window._formTrackingCache.set(trackingKey, now);
+
+    // Clean up old entries (keep only last 10 submissions)
+    if (window._formTrackingCache.size > 10) {
+      const entries = Array.from(window._formTrackingCache.entries());
+      entries.sort((a, b) => b[1] - a[1]); // Sort by timestamp, newest first
+      window._formTrackingCache = new Map(entries.slice(0, 10));
     }
 
     // Send event with ALL extracted form data
@@ -454,11 +481,11 @@
 
         // Check for duplicate (protects against double-submit)
         if (isDuplicateSubmission(form)) {
-          console.log('[Tracker] Duplicate form submission prevented');
+          console.log('[Tracker] Duplicate form submission prevented (WeakMap protection)');
           return;
         }
 
-        console.log('[Tracker] Form submit event detected - tracking now');
+        console.log('[Tracker] Form submit event detected - tracking via auto-listener');
 
         // ✅ CAPTURE FORM DATA IMMEDIATELY (before any navigation)
         trackFormSubmit(form);
