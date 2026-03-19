@@ -302,60 +302,49 @@ class TrackingService {
         'wpforms', 'wpforms-submit', 'wpforms_id', 'ninja_forms_field', 'nf_form_id'
       ];
 
-      // ✅ Field name patterns for normalization (WordPress-specific)
-      const FIELD_PATTERNS = {
-        name: /(^|[-_])(your[-_]?)?(name|fullname|full[-_]?name|fname|first[-_]?name|customer|username|user[-_]?name|contact[-_]?name)$/i,
-        email: /(^|[-_])(your[-_]?)?(email|e[-_]?mail|mail|email[-_]?address|user[-_]?email|contact[-_]?email)$/i,
-        phone: /(^|[-_])(your[-_]?)?(phone|tel|telephone|mobile|cell|phone[-_]?number|tel[-_]?number|contact[-_]?phone|user[-_]?phone)$/i,
-        message: /(^|[-_])(your[-_]?)?(message|comment|comments|description|details|inquiry|question|body|content|text)$/i,
-        subject: /(^|[-_])(your[-_]?)?(subject|title|topic|regarding|about)$/i,
-        // Additional common fields
-        service: /(^|[-_])(your[-_]?)?(service|services|service[-_]?type|service[-_]?required)$/i,
-        address: /(^|[-_])(your[-_]?)?(address|location|street|city|area|contact[-_]?address)$/i,
-        website: /(^|[-_])(your[-_]?)?(website|site|url|website[-_]?url|site[-_]?url|web)$/i,
-        company: /(^|[-_])(your[-_]?)?(company|organization|business|company[-_]?name|org)$/i
+      // ✅ Simple helper to check if field name contains pattern (case-insensitive)
+      const containsPattern = (fieldName, patterns) => {
+        const lower = fieldName.toLowerCase();
+        return patterns.some(pattern => lower.includes(pattern));
       };
 
-      // ✅ Normalize field names (map your-name → name, etc.)
+      // ✅ Extract and normalize all fields
       const normalizedData = {};
+      const customFields = {};
+
       for (const key in eventData) {
         if (!eventData.hasOwnProperty(key)) continue;
 
         const value = eventData[key];
 
-        // Skip empty or metadata fields
-        if (!value || WP_METADATA_FIELDS.includes(key)) continue;
+        // Skip empty values and WordPress metadata
+        if (!value || value === '' || WP_METADATA_FIELDS.includes(key)) continue;
 
-        // Check if field matches any standard pattern
-        let mapped = false;
-        for (const [standardField, pattern] of Object.entries(FIELD_PATTERNS)) {
-          if (pattern.test(key)) {
-            // Map to standard field (only if not already set)
-            if (!normalizedData[standardField]) {
-              normalizedData[standardField] = value;
-            }
-            mapped = true;
-            break;
-          }
-        }
+        const lowerKey = key.toLowerCase();
 
-        // If not mapped, keep as custom field
-        if (!mapped) {
-          normalizedData[key] = value;
-        }
-      }
-
-      // Standard fields for custom field extraction
-      const standardFields = ['name', 'email', 'phone', 'phoneNumber', 'message', 'subject',
-                              'service', 'address', 'website', 'company',
-                              'formName', 'formId', 'url', 'referrer', 'device', 'source',
-                              'utm_source', 'utm_campaign', 'visitorId', 'pagesVisited',
-                              'eventType', 'timestamp', 'isNewVisitor', 'apiKey'];
-
-      const customFields = {};
-      for (const key in normalizedData) {
-        if (normalizedData.hasOwnProperty(key) && !standardFields.includes(key)) {
-          customFields[key] = normalizedData[key];
+        // Smart field mapping based on field name content
+        if (containsPattern(lowerKey, ['name', 'fullname', 'fname'])) {
+          if (!normalizedData.name) normalizedData.name = value;
+        } else if (containsPattern(lowerKey, ['email', 'e-mail', 'mail'])) {
+          if (!normalizedData.email) normalizedData.email = value;
+        } else if (containsPattern(lowerKey, ['phone', 'tel', 'mobile', 'cell'])) {
+          if (!normalizedData.phone) normalizedData.phone = value;
+        } else if (containsPattern(lowerKey, ['message', 'comment', 'description', 'inquiry'])) {
+          if (!normalizedData.message) normalizedData.message = value;
+        } else if (containsPattern(lowerKey, ['subject', 'title', 'topic'])) {
+          if (!normalizedData.subject) normalizedData.subject = value;
+        } else if (containsPattern(lowerKey, ['service'])) {
+          if (!normalizedData.service) normalizedData.service = value;
+        } else if (containsPattern(lowerKey, ['address', 'location', 'city'])) {
+          if (!normalizedData.address) normalizedData.address = value;
+        } else if (containsPattern(lowerKey, ['website', 'site', 'url']) && lowerKey !== 'url' && lowerKey !== 'referrer') {
+          if (!normalizedData.website) normalizedData.website = value;
+        } else if (containsPattern(lowerKey, ['company', 'organization', 'business'])) {
+          if (!normalizedData.company) normalizedData.company = value;
+        } else {
+          // Keep as custom field (but clean the name - remove "your-" prefix)
+          const cleanKey = key.replace(/^your[-_]?/i, '');
+          customFields[cleanKey] = value;
         }
       }
 
