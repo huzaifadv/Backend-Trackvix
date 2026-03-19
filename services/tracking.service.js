@@ -308,7 +308,12 @@ class TrackingService {
         email: /^(your[-_]?email|user[-_]?email|contact[-_]?email|email[-_]?address|e[-_]?mail)$/i,
         phone: /^(your[-_]?phone|user[-_]?phone|contact[-_]?phone|telephone|tel|mobile|phone[-_]?number)$/i,
         message: /^(your[-_]?message|user[-_]?message|comment|comments|description|details|inquiry)$/i,
-        subject: /^(your[-_]?subject|title|topic|regarding)$/i
+        subject: /^(your[-_]?subject|title|topic|regarding)$/i,
+        // Additional common fields
+        service: /^(your[-_]?service|service[-_]?required|service[-_]?type)$/i,
+        address: /^(your[-_]?address|contact[-_]?address|street[-_]?address|location)$/i,
+        website: /^(your[-_]?website|website[-_]?url|site[-_]?url|url)$/i,
+        company: /^(your[-_]?company|company[-_]?name|organization|business[-_]?name)$/i
       };
 
       // ✅ Normalize field names (map your-name → name, etc.)
@@ -342,6 +347,7 @@ class TrackingService {
 
       // Standard fields for custom field extraction
       const standardFields = ['name', 'email', 'phone', 'phoneNumber', 'message', 'subject',
+                              'service', 'address', 'website', 'company',
                               'formName', 'formId', 'url', 'referrer', 'device', 'source',
                               'utm_source', 'utm_campaign', 'visitorId', 'pagesVisited',
                               'eventType', 'timestamp', 'isNewVisitor', 'apiKey'];
@@ -365,6 +371,11 @@ class TrackingService {
         message: normalizedData.message || eventData.message || null,
         subject: normalizedData.subject || eventData.subject || eventData.formName || eventData.formId || 'Contact Form',
         formName: eventData.formName || eventData.formId || 'Contact Form',
+        // Additional normalized fields
+        service: normalizedData.service || null,
+        address: normalizedData.address || null,
+        website: normalizedData.website || null,
+        company: normalizedData.company || null,
         // Visitor intelligence
         source: sourceMap[source] || 'Direct',
         device: deviceValue,

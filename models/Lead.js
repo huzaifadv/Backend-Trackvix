@@ -52,6 +52,23 @@ const leadSchema = new mongoose.Schema({
     trim: true,
     default: 'Contact Form'
   },
+  // Additional common fields
+  service: {
+    type: String,
+    trim: true
+  },
+  address: {
+    type: String,
+    trim: true
+  },
+  website: {
+    type: String,
+    trim: true
+  },
+  company: {
+    type: String,
+    trim: true
+  },
   // Visitor intelligence data
   source: {
     type: String,
