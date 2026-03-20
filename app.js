@@ -87,8 +87,8 @@ if (config.env === 'development') {
 // ===========================
 // Trust Proxy (for rate limiting and IP detection)
 // ===========================
-// Trust all proxies (AWS ALB, Nginx, Cloudflare, etc.)
-app.set('trust proxy', true);
+// Trust first proxy hop (AWS ALB/Nginx) - number value required by express-rate-limit v7+
+app.set('trust proxy', 1);
 
 // ===========================
 // Serve Static Files (public folder)
