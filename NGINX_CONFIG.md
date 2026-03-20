@@ -8,7 +8,7 @@ Backend ko real client IP nahi mil raha - sirf localhost/private IP aa raha hai.
 ### EC2 pe Nginx config update karein:
 
 ```bash
-sudo nano /etc/nginx/sites-available/trackvix
+sudo nano /etc/nginx/sites-available/webtrackly
 ```
 
 ### Add these headers in the location block:
@@ -52,7 +52,7 @@ Make sure Cloudflare is in "Full" SSL mode (not "Flexible").
 
 After updating, check logs:
 ```bash
-pm2 logs trackvix-backend
+pm2 logs webtrackly-backend
 ```
 
 You should see real IPs in logs, not `127.0.0.1`.
