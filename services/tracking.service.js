@@ -460,15 +460,16 @@ class TrackingService {
       ip: ip
     });
 
-    const event = await Event.create(eventDoc).catch((error) => {
+    let eventId = null;
+    try {
+      const event = await Event.create(eventDoc);
+      eventId = event._id;
+    } catch (error) {
       logger.error('Error creating call_click event:', error);
-      return null;
-    });
-
-    // Create Lead document for inbox
-    if (event) {
-      await this.createLeadFromEvent(websiteId, 'call_click', eventData, ip, userAgent, event._id);
     }
+
+    // Create Lead document for inbox (always attempt)
+    await this.createLeadFromEvent(websiteId, 'call_click', eventData, ip, userAgent, eventId);
 
     // Increment event count (actual event, not pageview)
     this.updateWebsiteMetadata(websiteId).catch(() => {});
@@ -497,30 +498,31 @@ class TrackingService {
 
     // Create Event document for real-time tracking
     const Event = require('../models/Event');
-    const event = await Event.create({
-      websiteId: websiteId,
-      type: 'form_submit',
-      source: this.detectSource(eventData.source, eventData.referrer),
-      country: geoData.country,
-      city: geoData.city,
-      device: eventData.device || 'unknown',
-      visitorId: eventData.visitorId,
-      metadata: {
-        userAgent: userAgent,
-        ip: ip,
-        referrer: eventData.referrer,
-        path: eventData.url,
-        formId: eventData.formId || 'unknown',
-      }
-    }).catch((error) => {
-      console.error('Error creating form_submit event:', error);
-      return null;
-    });
-
-    // Create Lead document for inbox
-    if (event) {
-      await this.createLeadFromEvent(websiteId, 'form_submit', eventData, ip, userAgent, event._id);
+    let eventId = null;
+    try {
+      const event = await Event.create({
+        websiteId: websiteId,
+        type: 'form_submit',
+        source: this.detectSource(eventData.source, eventData.referrer),
+        country: geoData.country,
+        city: geoData.city,
+        device: eventData.device || 'unknown',
+        visitorId: eventData.visitorId,
+        metadata: {
+          userAgent: userAgent,
+          ip: ip,
+          referrer: eventData.referrer,
+          path: eventData.url,
+          formId: eventData.formId || 'unknown',
+        }
+      });
+      eventId = event._id;
+    } catch (error) {
+      logger.error('Error creating form_submit event:', error);
     }
+
+    // Create Lead document for inbox (always attempt, even if event creation failed)
+    await this.createLeadFromEvent(websiteId, 'form_submit', eventData, ip, userAgent, eventId);
 
     // Increment event count (actual event, not pageview)
     this.updateWebsiteMetadata(websiteId).catch(() => {});
@@ -533,6 +535,7 @@ class TrackingService {
    * NOTE: Does NOT record visitor - only pageviews record visitors
    */
   static async processCtaClick(websiteId, eventData, ip, userAgent) {
+    const logger = require('../config/logger');
     const today = new Date();
 
     const updates = {
@@ -549,24 +552,31 @@ class TrackingService {
 
     // Create Event document for real-time tracking
     const Event = require('../models/Event');
-    await Event.create({
-      websiteId: websiteId,
-      type: 'cta_click',
-      source: this.detectSource(eventData.source, eventData.referrer),
-      country: geoData.country,
-      city: geoData.city,
-      device: eventData.device || 'unknown',
-      visitorId: eventData.visitorId,
-      metadata: {
-        userAgent: userAgent,
-        ip: ip,
-        referrer: eventData.referrer,
-        path: eventData.url,
-        ctaId: eventData.ctaId || eventData.ctaText || 'unknown',
-      }
-    }).catch((error) => {
-      console.error('Error creating cta_click event:', error);
-    });
+    let eventId = null;
+    try {
+      const event = await Event.create({
+        websiteId: websiteId,
+        type: 'cta_click',
+        source: this.detectSource(eventData.source, eventData.referrer),
+        country: geoData.country,
+        city: geoData.city,
+        device: eventData.device || 'unknown',
+        visitorId: eventData.visitorId,
+        metadata: {
+          userAgent: userAgent,
+          ip: ip,
+          referrer: eventData.referrer,
+          path: eventData.url,
+          ctaId: eventData.ctaId || eventData.ctaText || 'unknown',
+        }
+      });
+      eventId = event._id;
+    } catch (error) {
+      logger.error('Error creating cta_click event:', error);
+    }
+
+    // Create Lead document for inbox (always attempt)
+    await this.createLeadFromEvent(websiteId, 'cta_click', eventData, ip, userAgent, eventId);
 
     // Increment event count (actual event, not pageview)
     this.updateWebsiteMetadata(websiteId).catch(() => {});
@@ -579,6 +589,7 @@ class TrackingService {
    * NOTE: Does NOT record visitor - only pageviews record visitors
    */
   static async processWhatsAppClick(websiteId, eventData, ip, userAgent) {
+    const logger = require('../config/logger');
     const today = new Date();
 
     const updates = {
@@ -595,30 +606,31 @@ class TrackingService {
 
     // Create Event document for real-time tracking
     const Event = require('../models/Event');
-    const event = await Event.create({
-      websiteId: websiteId,
-      type: 'whatsapp_click',
-      source: this.detectSource(eventData.source, eventData.referrer),
-      country: geoData.country,
-      city: geoData.city,
-      device: eventData.device || 'unknown',
-      visitorId: eventData.visitorId,
-      metadata: {
-        userAgent: userAgent,
-        ip: ip,
-        referrer: eventData.referrer,
-        path: eventData.url,
-        phoneNumber: eventData.phoneNumber,
-      }
-    }).catch((error) => {
-      console.error('Error creating whatsapp_click event:', error);
-      return null;
-    });
-
-    // Create Lead document for inbox
-    if (event) {
-      await this.createLeadFromEvent(websiteId, 'whatsapp_click', eventData, ip, userAgent, event._id);
+    let eventId = null;
+    try {
+      const event = await Event.create({
+        websiteId: websiteId,
+        type: 'whatsapp_click',
+        source: this.detectSource(eventData.source, eventData.referrer),
+        country: geoData.country,
+        city: geoData.city,
+        device: eventData.device || 'unknown',
+        visitorId: eventData.visitorId,
+        metadata: {
+          userAgent: userAgent,
+          ip: ip,
+          referrer: eventData.referrer,
+          path: eventData.url,
+          phoneNumber: eventData.phoneNumber,
+        }
+      });
+      eventId = event._id;
+    } catch (error) {
+      logger.error('Error creating whatsapp_click event:', error);
     }
+
+    // Create Lead document for inbox (always attempt)
+    await this.createLeadFromEvent(websiteId, 'whatsapp_click', eventData, ip, userAgent, eventId);
 
     // Increment event count (actual event, not pageview)
     this.updateWebsiteMetadata(websiteId).catch(() => {});
@@ -799,12 +811,21 @@ class TrackingService {
     const uniqueVisitors = await UniqueVisitor.getUniqueCount(websiteId, startDate, endDate);
 
     // Get new vs returning visitors
+    // New = firstSeen in date range AND visitCount === 1 (first ever visit)
+    // Returning = visited in date range AND visitCount > 1 (came back again)
+    const websiteObjId = new mongoose.Types.ObjectId(websiteId);
+
     const newVisitors = await UniqueVisitor.countDocuments({
-      websiteId: new mongoose.Types.ObjectId(websiteId),
-      firstSeen: { $gte: startDate, $lte: endDate },
+      websiteId: websiteObjId,
+      lastSeen: { $gte: startDate, $lte: endDate },
+      visitCount: 1,
     });
 
-    const returningVisitors = uniqueVisitors - newVisitors;
+    const returningVisitors = await UniqueVisitor.countDocuments({
+      websiteId: websiteObjId,
+      lastSeen: { $gte: startDate, $lte: endDate },
+      visitCount: { $gt: 1 },
+    });
 
     // Aggregate event totals
     const totalCallClicks = leadsStats.reduce((sum, stat) => sum + stat.callClicks, 0);

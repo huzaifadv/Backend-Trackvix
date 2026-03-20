@@ -25,8 +25,8 @@ const eventSchema = new mongoose.Schema(
     },
     country: {
       type: String,
-      uppercase: true,
-      length: [2, 'Country code must be 2 characters'],
+      trim: true,
+      maxlength: [100, 'Country name cannot exceed 100 characters'],
     },
     city: {
       type: String,
