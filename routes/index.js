@@ -32,7 +32,7 @@ router.use('/admin', adminRoutes);
 router.get('/', (req, res) => {
   res.json({
     success: true,
-    message: 'Webtrakly API',
+    message: 'Webtrackly API',
     version: process.env.API_VERSION || 'v1',
     documentation: '/api/docs',
     endpoints: {

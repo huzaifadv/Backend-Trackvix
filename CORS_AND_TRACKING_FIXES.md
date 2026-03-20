@@ -48,7 +48,7 @@ if (config.env === 'development') {
 **Solution:**
 - Added: `"Tracker script loaded successfully"` on script load
 - Added: `"Event sent successfully"` after successful POST
-- Prefixed all logs with `[Webtrakly]` for easy identification
+- Prefixed all logs with `[Webtrackly]` for easy identification
 
 ### 4. Middleware Order Verification (`app.js`)
 **Already correct:** CORS middleware is applied before routes (line 31)
@@ -78,8 +78,8 @@ NODE_ENV=development npm run dev
 </script>
 
 # Check browser console for:
-# [Webtrakly] Tracker script loaded successfully
-# [Webtrakly] Event sent successfully
+# [Webtrackly] Tracker script loaded successfully
+# [Webtrackly] Event sent successfully
 ```
 
 ### 3. Test Manual Event POST
@@ -155,15 +155,15 @@ CORS_ORIGIN=https://mysite.com,https://www.mysite.com
 
 When tracking is working correctly, you'll see:
 ```
-[Webtrakly] Tracker script loaded successfully
-[Webtrakly] Event sent successfully
-[Webtrakly] Event sent successfully
+[Webtrackly] Tracker script loaded successfully
+[Webtrackly] Event sent successfully
+[Webtrackly] Event sent successfully
 ...
 ```
 
 When there's an error:
 ```
-[Webtrakly] API key not found
+[Webtrackly] API key not found
 ```
 
 ## Middleware Flow
@@ -197,7 +197,7 @@ Request → Helmet Security
 
 ### Events Not Tracking
 **Check:**
-1. Browser console for `[Webtrakly]` messages
+1. Browser console for `[Webtrackly]` messages
 2. API key is 64 characters (hex format)
 3. Endpoint is `/api/v1/events/log` (not `/collect`)
 4. Network tab shows 200 response

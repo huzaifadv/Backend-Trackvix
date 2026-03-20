@@ -14,8 +14,8 @@ const config = require('../config/environment');
 const generateAccessToken = (payload) => {
   return jwt.sign(payload, config.jwt.secret, {
     expiresIn: config.jwt.expire,
-    issuer: 'website-tracker-api',
-    audience: 'website-tracker-client',
+    issuer: 'webtrackly-api',
+    audience: 'webtrackly-client',
   });
 };
 
@@ -27,8 +27,8 @@ const generateAccessToken = (payload) => {
 const generateRefreshToken = (payload) => {
   return jwt.sign(payload, config.jwt.refreshSecret, {
     expiresIn: config.jwt.refreshExpire,
-    issuer: 'website-tracker-api',
-    audience: 'website-tracker-client',
+    issuer: 'webtrackly-api',
+    audience: 'webtrackly-client',
   });
 };
 
@@ -58,8 +58,8 @@ const generateTokens = (user) => {
 const verifyAccessToken = (token) => {
   try {
     return jwt.verify(token, config.jwt.secret, {
-      issuer: 'webtrakly-api',
-      audience: 'webtrakly-client',
+      issuer: 'webtrackly-api',
+      audience: 'webtrackly-client',
     });
   } catch (error) {
     if (error.name === 'TokenExpiredError') {
@@ -80,8 +80,8 @@ const verifyAccessToken = (token) => {
 const verifyRefreshToken = (token) => {
   try {
     return jwt.verify(token, config.jwt.refreshSecret, {
-      issuer: 'webtrakly-api',
-      audience: 'webtrakly-client',
+      issuer: 'webtrackly-api',
+      audience: 'webtrackly-client',
     });
   } catch (error) {
     if (error.name === 'TokenExpiredError') {

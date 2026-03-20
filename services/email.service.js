@@ -57,9 +57,9 @@ class EmailService {
 
     try {
       const mailOptions = {
-        from: `"${process.env.EMAIL_FROM_NAME || 'Webtrakly'}" <${process.env.EMAIL_USER}>`,
+        from: `"${process.env.EMAIL_FROM_NAME || 'Webtrackly'}" <${process.env.EMAIL_USER}>`,
         to: email,
-        subject: 'Verify Your Email - Webtrakly',
+        subject: 'Verify Your Email - Webtrackly',
         html: `
 <!DOCTYPE html>
 <html>
@@ -78,7 +78,7 @@ class EmailService {
 <body>
   <div class="container">
     <div class="header">
-      <h1>🌐 Webtrakly</h1>
+      <h1>🌐 Webtrackly</h1>
       <p>Email Verification</p>
     </div>
     <div class="content">
@@ -98,7 +98,7 @@ class EmailService {
       </p>
     </div>
     <div class="footer">
-      <p>&copy; ${new Date().getFullYear()} Webtrakly. All rights reserved.</p>
+      <p>&copy; ${new Date().getFullYear()} Webtrackly. All rights reserved.</p>
     </div>
   </div>
 </body>
@@ -107,7 +107,7 @@ class EmailService {
         text: `
 Hi ${name}!
 
-Thanks for signing up for Webtrakly!
+Thanks for signing up for Webtrackly!
 
 Your verification code is: ${code}
 
@@ -115,10 +115,10 @@ This code will expire in 10 minutes.
 
 Enter this code on the verification page to activate your account.
 
-If you didn't sign up for Webtrakly, you can safely ignore this email.
+If you didn't sign up for Webtrackly, you can safely ignore this email.
 
 Best regards,
-Webtrakly Team
+Webtrackly Team
         `,
       };
 
@@ -147,9 +147,9 @@ Webtrakly Team
 
     try {
       const mailOptions = {
-        from: `"${process.env.EMAIL_FROM_NAME || 'Webtrakly'}" <${process.env.EMAIL_USER}>`,
+        from: `"${process.env.EMAIL_FROM_NAME || 'Webtrackly'}" <${process.env.EMAIL_USER}>`,
         to: email,
-        subject: 'Welcome to Webtrakly! 🎉',
+        subject: 'Welcome to Webtrackly! 🎉',
         html: `
 <!DOCTYPE html>
 <html>
@@ -166,7 +166,7 @@ Webtrakly Team
 <body>
   <div class="container">
     <div class="header">
-      <h1>Welcome to Webtrakly! 🎉</h1>
+      <h1>Welcome to Webtrackly! 🎉</h1>
     </div>
     <div class="content">
       <h2>Hi ${name}!</h2>
@@ -196,7 +196,7 @@ Webtrakly Team
       </p>
     </div>
     <div class="footer">
-      <p>&copy; ${new Date().getFullYear()} Webtrakly. All rights reserved.</p>
+      <p>&copy; ${new Date().getFullYear()} Webtrackly. All rights reserved.</p>
     </div>
   </div>
 </body>

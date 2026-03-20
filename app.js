@@ -118,7 +118,7 @@ app.use(`/api/${config.apiVersion}`, routes);
 app.get('/', (req, res) => {
   res.json({
     success: true,
-    message: 'Webtrakly API Server',
+    message: 'Webtrackly API Server',
     version: config.apiVersion,
     environment: config.env,
     documentation: `/api/${config.apiVersion}`,

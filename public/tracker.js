@@ -1,5 +1,5 @@
 /**
- * Webtrakly - Production Client Script
+ * Webtrackly - Production Client Script
  * Tracks: Visitors, Location, Device, Traffic Source, Leads
  * @version 2.0.0
  */
@@ -483,7 +483,7 @@
   init();
 
   // Expose tracking functions globally for React/SPA usage
-  window.Webtrakly = {
+  window.Webtrackly = {
     trackFormSubmit: trackFormSubmit,
     trackCtaClick: trackCtaClick,
     trackTelClick: trackTelClick,

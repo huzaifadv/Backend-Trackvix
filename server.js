@@ -34,7 +34,7 @@ const startServer = async () => {
       logger.info(`
 ╔════════════════════════════════════════════════════════════╗
 ║                                                            ║
-║   🚀 Webtrakly API Server                           ║
+║   🚀 Webtrackly API Server                           ║
 ║                                                            ║
 ║   Environment:  ${config.env.padEnd(42)}║
 ║   Port:         ${PORT.toString().padEnd(42)}║
