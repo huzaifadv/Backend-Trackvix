@@ -193,6 +193,39 @@ class AuthService {
   }
 
   /**
+   * Change user password
+   * @param {String} userId - User ID
+   * @param {String} currentPassword - Current password
+   * @param {String} newPassword - New password
+   * @returns {Object} Result
+   */
+  async changePassword(userId, currentPassword, newPassword) {
+    try {
+      const user = await User.findById(userId).select('+password');
+
+      if (!user) {
+        throw new OperationalError('User not found', 404);
+      }
+
+      const isMatch = await user.comparePassword(currentPassword);
+      if (!isMatch) {
+        throw new OperationalError('Current password is incorrect', 400);
+      }
+
+      user.password = newPassword;
+      await user.save();
+
+      logger.info(`Password changed for user: ${user.email}`);
+
+      return { message: 'Password updated successfully' };
+    } catch (error) {
+      if (error.isOperational) throw error;
+      logger.error('Change password error:', error);
+      throw new OperationalError('Failed to change password', 500);
+    }
+  }
+
+  /**
    * Verify email with code
    * @param {String} userId - User ID
    * @param {String} code - Verification code

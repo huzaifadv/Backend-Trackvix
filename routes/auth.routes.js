@@ -44,6 +44,7 @@ router.post(
 // Protected routes
 router.get('/profile', authenticate, authController.getProfile);
 router.put('/profile', authenticate, authController.updateProfile);
+router.post('/change-password', authenticate, authController.changePassword);
 router.post('/logout', authenticate, authController.logout);
 
 // Email verification routes (protected)

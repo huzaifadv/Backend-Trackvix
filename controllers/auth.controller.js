@@ -80,6 +80,26 @@ class AuthController {
   });
 
   /**
+   * Change password
+   * POST /api/v1/auth/change-password
+   */
+  changePassword = asyncHandler(async (req, res) => {
+    const { currentPassword, newPassword } = req.body;
+
+    if (!currentPassword || !newPassword) {
+      return ApiResponse.error(res, 400, 'Current password and new password are required');
+    }
+
+    if (newPassword.length < 8) {
+      return ApiResponse.error(res, 400, 'New password must be at least 8 characters');
+    }
+
+    const result = await authService.changePassword(req.userId, currentPassword, newPassword);
+
+    return ApiResponse.success(res, 200, result.message);
+  });
+
+  /**
    * Verify email with code
    * POST /api/v1/auth/verify-email
    */
