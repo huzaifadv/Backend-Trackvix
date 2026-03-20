@@ -58,8 +58,8 @@ const generateTokens = (user) => {
 const verifyAccessToken = (token) => {
   try {
     return jwt.verify(token, config.jwt.secret, {
-      issuer: 'website-tracker-api',
-      audience: 'website-tracker-client',
+      issuer: 'webtrakly-api',
+      audience: 'webtrakly-client',
     });
   } catch (error) {
     if (error.name === 'TokenExpiredError') {
@@ -80,8 +80,8 @@ const verifyAccessToken = (token) => {
 const verifyRefreshToken = (token) => {
   try {
     return jwt.verify(token, config.jwt.refreshSecret, {
-      issuer: 'website-tracker-api',
-      audience: 'website-tracker-client',
+      issuer: 'webtrakly-api',
+      audience: 'webtrakly-client',
     });
   } catch (error) {
     if (error.name === 'TokenExpiredError') {

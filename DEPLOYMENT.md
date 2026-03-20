@@ -1,4 +1,4 @@
-# Deployment Guide - Website Tracker Backend
+# Deployment Guide - Webtrakly Backend
 
 ## Deploying to Render.com
 
@@ -18,7 +18,7 @@
 2. Click "New +" → "Web Service"
 3. Connect your GitHub repository
 4. Configure the service:
-   - **Name:** website-tracker-backend
+   - **Name:** webtrakly-backend
    - **Runtime:** Node
    - **Build Command:** `npm install`
    - **Start Command:** `npm start`
@@ -32,7 +32,7 @@ In Render Dashboard → Environment, add:
 NODE_ENV=production
 PORT=5000
 API_VERSION=v1
-MONGODB_URI_PROD=mongodb+srv://user:pass@cluster.mongodb.net/website-tracker
+MONGODB_URI_PROD=mongodb+srv://user:pass@cluster.mongodb.net/webtrakly
 JWT_SECRET=<generate-32-char-random-string>
 JWT_REFRESH_SECRET=<generate-32-char-random-string>
 CORS_ORIGIN=https://your-frontend-domain.com

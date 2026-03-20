@@ -224,7 +224,7 @@ node scripts/setup-production-indexes.js
 ```bash
 # Check index build progress
 mongo
-> use website-tracker
+> use webtrakly
 > db.currentOp({ "command.createIndexes": { $exists: true } })
 ```
 
@@ -318,7 +318,7 @@ db.uniquevisitors.find({ lastSeen: { $lt: new Date(Date.now() - 30*24*60*60*1000
 
 ## Summary
 
-This indexing strategy enables your Website Tracker SaaS to scale to **50,000+ users** and **millions of events** without changing any business logic.
+This indexing strategy enables your Webtrakly SaaS to scale to **50,000+ users** and **millions of events** without changing any business logic.
 
 ### Key Benefits:
 

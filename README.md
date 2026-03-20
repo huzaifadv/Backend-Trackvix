@@ -1,4 +1,4 @@
-# Website Tracker Backend
+# Webtrakly Backend
 
 Production-grade website tracking engine with event ingestion, analytics, and scalable architecture.
 
@@ -46,7 +46,7 @@ NODE_ENV=development
 PORT=5000
 
 # Database
-MONGODB_URI=mongodb://localhost:27017/website-tracker
+MONGODB_URI=mongodb://localhost:27017/webtrakly
 
 # JWT Secrets (change these!)
 JWT_SECRET=<64-char-hex-string>
@@ -136,7 +136,7 @@ Add to any website:
 
 ```javascript
 // Track custom event
-window.WebTracker.track('custom_event', {
+window.Webtrakly.track('custom_event', {
   category: 'engagement',
   action: 'video_play',
   label: 'homepage_video'

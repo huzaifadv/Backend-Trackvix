@@ -1,6 +1,6 @@
 services:
   - type: web
-    name: website-tracker-backend
+    name: webtrakly-backend
     runtime: node
     buildCommand: npm install
     startCommand: npm start

@@ -1,7 +1,7 @@
 {
-  "name": "website-tracker-backend",
+  "name": "webtrakly-backend",
   "version": "1.0.0",
-  "description": "Backend API for Website Tracker - Monitor websites, track events, and analyze visitor behavior",
+  "description": "Backend API for Webtrakly - Monitor websites, track events, and analyze visitor behavior",
   "main": "server.js",
   "scripts": {
     "dev": "nodemon server.js",
@@ -14,7 +14,7 @@
     "lint:fix": "eslint . --fix"
   },
   "keywords": [
-    "website-tracker",
+    "webtrakly",
     "analytics",
     "monitoring",
     "api"

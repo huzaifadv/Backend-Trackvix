@@ -234,7 +234,7 @@ class TrackingService {
       const response = await axios.post(webhookUrl, leadData, {
         headers: {
           'Content-Type': 'application/json',
-          'User-Agent': 'Website-Tracker-Webhook/1.0'
+          'User-Agent': 'Webtrakly-Webhook/1.0'
         },
         timeout: 5000 // 5 second timeout
       });

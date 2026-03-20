@@ -60,7 +60,7 @@ class CrawlerService {
         maxRedirects: 3,
         maxContentLength: 5 * 1024 * 1024, // 5MB limit
         headers: {
-          'User-Agent': 'WebsiteTracker-Bot/1.0 (SEO Crawler)',
+          'User-Agent': 'Webtrakly-Bot/1.0 (SEO Crawler)',
         },
         validateStatus: (status) => status >= 200 && status < 400,
       });

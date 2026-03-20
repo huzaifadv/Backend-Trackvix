@@ -1,4 +1,4 @@
-# Website Tracker - Implementation Guide
+# Webtrakly - Implementation Guide
 
 ## Overview
 

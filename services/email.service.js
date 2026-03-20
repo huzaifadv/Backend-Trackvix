@@ -57,9 +57,9 @@ class EmailService {
 
     try {
       const mailOptions = {
-        from: `"${process.env.EMAIL_FROM_NAME || 'Website Tracker'}" <${process.env.EMAIL_USER}>`,
+        from: `"${process.env.EMAIL_FROM_NAME || 'Webtrakly'}" <${process.env.EMAIL_USER}>`,
         to: email,
-        subject: 'Verify Your Email - Website Tracker',
+        subject: 'Verify Your Email - Webtrakly',
         html: `
 <!DOCTYPE html>
 <html>
@@ -78,7 +78,7 @@ class EmailService {
 <body>
   <div class="container">
     <div class="header">
-      <h1>🌐 Website Tracker</h1>
+      <h1>🌐 Webtrakly</h1>
       <p>Email Verification</p>
     </div>
     <div class="content">
@@ -98,7 +98,7 @@ class EmailService {
       </p>
     </div>
     <div class="footer">
-      <p>&copy; ${new Date().getFullYear()} Website Tracker. All rights reserved.</p>
+      <p>&copy; ${new Date().getFullYear()} Webtrakly. All rights reserved.</p>
     </div>
   </div>
 </body>
@@ -107,7 +107,7 @@ class EmailService {
         text: `
 Hi ${name}!
 
-Thanks for signing up for Website Tracker!
+Thanks for signing up for Webtrakly!
 
 Your verification code is: ${code}
 
@@ -115,10 +115,10 @@ This code will expire in 10 minutes.
 
 Enter this code on the verification page to activate your account.
 
-If you didn't sign up for Website Tracker, you can safely ignore this email.
+If you didn't sign up for Webtrakly, you can safely ignore this email.
 
 Best regards,
-Website Tracker Team
+Webtrakly Team
         `,
       };
 
@@ -147,9 +147,9 @@ Website Tracker Team
 
     try {
       const mailOptions = {
-        from: `"${process.env.EMAIL_FROM_NAME || 'Website Tracker'}" <${process.env.EMAIL_USER}>`,
+        from: `"${process.env.EMAIL_FROM_NAME || 'Webtrakly'}" <${process.env.EMAIL_USER}>`,
         to: email,
-        subject: 'Welcome to Website Tracker! 🎉',
+        subject: 'Welcome to Webtrakly! 🎉',
         html: `
 <!DOCTYPE html>
 <html>
@@ -166,7 +166,7 @@ Website Tracker Team
 <body>
   <div class="container">
     <div class="header">
-      <h1>Welcome to Website Tracker! 🎉</h1>
+      <h1>Welcome to Webtrakly! 🎉</h1>
     </div>
     <div class="content">
       <h2>Hi ${name}!</h2>
@@ -196,7 +196,7 @@ Website Tracker Team
       </p>
     </div>
     <div class="footer">
-      <p>&copy; ${new Date().getFullYear()} Website Tracker. All rights reserved.</p>
+      <p>&copy; ${new Date().getFullYear()} Webtrakly. All rights reserved.</p>
     </div>
   </div>
 </body>

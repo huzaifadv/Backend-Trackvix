@@ -2,7 +2,7 @@ const mongoose = require('mongoose');
 
 console.log('Starting DB connection test...');
 
-mongoose.connect('mongodb://localhost:27017/website-tracker', {
+mongoose.connect('mongodb://localhost:27017/webtrakly', {
   minPoolSize: 2,
   maxPoolSize: 10,
 })
