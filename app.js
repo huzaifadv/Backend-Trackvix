@@ -55,7 +55,7 @@ app.options('*', (req, res, next) => {
     return res.sendStatus(200);
   }
   // Use restricted CORS for other endpoints
-  cors(corsConfig)(req, res, next);
+  corsConfig(req, res, next);
 });
 
 // Rate limiting disabled for better user experience
