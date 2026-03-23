@@ -27,8 +27,8 @@ class ScanController {
         return ApiResponse.notFound(res, 'Website not found');
       }
 
-      // Build URL
-      const url = `https://${website.domain}`;
+      // Use domain directly (already a full HTTPS URL)
+      const url = website.domain;
 
       // Enqueue scan (async)
       const result = await ScanService.enqueueScan(website._id, url, priority);

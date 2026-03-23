@@ -13,11 +13,17 @@ class WebsiteService {
   /**
    * Create a new website
    * @param {String} userId - User ID
-   * @param {String} domain - Website domain
+   * @param {String} name - Display name
+   * @param {String} domain - Website URL (must be HTTPS)
    * @returns {Object} Created website
    */
-  async createWebsite(userId, domain) {
+  async createWebsite(userId, name, domain) {
     try {
+      // Validate HTTPS
+      if (!domain.startsWith('https://')) {
+        throw new OperationalError('Only HTTPS URLs are allowed', 400);
+      }
+
       // Check if website already exists for this user
       const existingWebsite = await Website.findOne({ userId, domain });
 
@@ -31,6 +37,7 @@ class WebsiteService {
 
       const website = new Website({
         userId,
+        name,
         domain,
         apiKey,
       });
@@ -104,8 +111,8 @@ class WebsiteService {
    */
   async updateWebsite(websiteId, userId, updateData) {
     try {
-      // Only allow updating domain
-      const allowedUpdates = ['domain'];
+      // Only allow updating name and domain
+      const allowedUpdates = ['name', 'domain'];
       const updates = {};
 
       Object.keys(updateData).forEach((key) => {

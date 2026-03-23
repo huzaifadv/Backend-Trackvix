@@ -13,15 +13,22 @@ const websiteSchema = new mongoose.Schema(
       required: [true, 'User ID is required'],
       index: true,
     },
+    name: {
+      type: String,
+      required: [true, 'Website name is required'],
+      trim: true,
+      maxlength: [100, 'Website name cannot exceed 100 characters'],
+    },
     domain: {
       type: String,
-      required: [true, 'Domain is required'],
+      required: [true, 'Website URL is required'],
       trim: true,
-      lowercase: true,
-      match: [
-        /^(?:[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?\.)+[a-z0-9][a-z0-9-]{0,61}[a-z0-9]$/,
-        'Please provide a valid domain',
-      ],
+      validate: {
+        validator: function (v) {
+          return /^https:\/\/[a-zA-Z0-9]([a-zA-Z0-9-]*[a-zA-Z0-9])?(\.[a-zA-Z0-9]([a-zA-Z0-9-]*[a-zA-Z0-9])?)*\.[a-zA-Z]{2,}(\/.*)?$/.test(v);
+        },
+        message: 'Please provide a valid HTTPS URL (e.g. https://example.com)',
+      },
     },
     apiKey: {
       type: String,

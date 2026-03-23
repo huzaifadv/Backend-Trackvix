@@ -13,9 +13,9 @@ class WebsiteController {
    * POST /api/v1/websites
    */
   createWebsite = asyncHandler(async (req, res) => {
-    const { domain } = req.body;
+    const { name, domain } = req.body;
 
-    const website = await websiteService.createWebsite(req.userId, domain);
+    const website = await websiteService.createWebsite(req.userId, name, domain);
 
     return ApiResponse.created(res, 'Website created successfully', website);
   });

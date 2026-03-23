@@ -9,6 +9,7 @@ const leadsRoutes = require('./leads.routes');
 const healthRoutes = require('./health.routes');
 const billingRoutes = require('./billing.routes');
 const adminRoutes = require('./admin.routes');
+const aiAnalyzerRoutes = require('./aiAnalyzer.routes');
 
 const router = express.Router();
 
@@ -27,6 +28,7 @@ router.use('/leads', leadsRoutes);
 router.use('/health', healthRoutes);
 router.use('/billing', billingRoutes);
 router.use('/admin', adminRoutes);
+router.use('/ai-analyzer', aiAnalyzerRoutes);
 
 // API root endpoint
 router.get('/', (req, res) => {
@@ -44,6 +46,7 @@ router.get('/', (req, res) => {
       health: '/api/v1/health',
       billing: '/api/v1/billing',
       admin: '/api/v1/admin',
+      aiAnalyzer: '/api/v1/ai-analyzer',
     },
   });
 });

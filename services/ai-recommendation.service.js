@@ -1,21 +1,27 @@
-const axios = require('axios');
+const { GoogleGenerativeAI } = require('@google/generative-ai');
 const logger = require('../config/logger');
 
 /**
  * AI Recommendation Service
- * Generates actionable improvement recommendations using AI
+ * Generates actionable improvement recommendations using Google Gemini AI
  * Cost-efficient with structured prompts
  */
 class AIRecommendationService {
   /**
-   * Get AI API configuration
+   * Get Gemini model instance
    */
-  static getConfig() {
-    return {
-      apiKey: process.env.OPENAI_API_KEY || process.env.AI_API_KEY || '',
-      model: process.env.AI_MODEL || 'gpt-3.5-turbo',
-      apiUrl: process.env.AI_API_URL || 'https://api.openai.com/v1/chat/completions',
-    };
+  static getModel() {
+    const apiKey = process.env.GEMINI_API_KEY || '';
+    if (!apiKey) return null;
+
+    const genAI = new GoogleGenerativeAI(apiKey);
+    return genAI.getGenerativeModel({
+      model: 'gemini-3-flash-preview',
+      generationConfig: {
+        temperature: 0.7,
+        maxOutputTokens: 1000,
+      },
+    });
   }
 
   /**
@@ -86,49 +92,25 @@ Focus on recommendations that will have the biggest impact on their business goa
   }
 
   /**
-   * Call AI API with retry logic
+   * Call Gemini AI with retry logic
    */
   static async generateRecommendations(healthData, trafficData = null, retries = 2) {
-    const config = this.getConfig();
+    const model = this.getModel();
 
-    if (!config.apiKey) {
-      logger.warn('AI API key not configured, using fallback recommendations');
+    if (!model) {
+      logger.warn('GEMINI_API_KEY not configured, using fallback recommendations');
       return this.getFallbackRecommendations(healthData);
     }
 
     const prompt = this.buildPrompt(healthData, trafficData);
+    const systemPrompt = 'You are a helpful SEO expert who explains technical concepts in simple terms for small business owners.\n\n';
 
     for (let attempt = 0; attempt <= retries; attempt++) {
       try {
-        logger.info(`AI recommendation request (attempt ${attempt + 1})`);
+        logger.info(`Gemini recommendation request (attempt ${attempt + 1})`);
 
-        const response = await axios.post(
-          config.apiUrl,
-          {
-            model: config.model,
-            messages: [
-              {
-                role: 'system',
-                content: 'You are a helpful SEO expert who explains technical concepts in simple terms for small business owners.',
-              },
-              {
-                role: 'user',
-                content: prompt,
-              },
-            ],
-            temperature: 0.7,
-            max_tokens: 1000,
-          },
-          {
-            headers: {
-              'Authorization': `Bearer ${config.apiKey}`,
-              'Content-Type': 'application/json',
-            },
-            timeout: 30000, // 30 seconds
-          }
-        );
-
-        const content = response.data.choices[0].message.content;
+        const result = await model.generateContent(systemPrompt + prompt);
+        const content = result.response.text();
 
         // Parse JSON response
         const recommendations = this.parseAIResponse(content);
@@ -138,7 +120,7 @@ Focus on recommendations that will have the biggest impact on their business goa
         return recommendations;
 
       } catch (error) {
-        logger.error(`AI API error (attempt ${attempt + 1}):`, error.message);
+        logger.error(`Gemini API error (attempt ${attempt + 1}):`, error.message);
 
         if (attempt < retries) {
           await this.sleep(Math.pow(2, attempt) * 1000);

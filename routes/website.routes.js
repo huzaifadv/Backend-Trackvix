@@ -16,13 +16,18 @@ const router = express.Router();
 
 // Validation middleware
 const createWebsiteValidation = [
+  body('name')
+    .notEmpty()
+    .withMessage('Website name is required')
+    .trim()
+    .isLength({ max: 100 })
+    .withMessage('Website name cannot exceed 100 characters'),
   body('domain')
     .notEmpty()
-    .withMessage('Domain is required')
+    .withMessage('Website URL is required')
     .trim()
-    .toLowerCase()
-    .matches(/^(?:[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?\.)+[a-z0-9][a-z0-9-]{0,61}[a-z0-9]$/)
-    .withMessage('Invalid domain format (use format: example.com without http/https)'),
+    .matches(/^https:\/\/.+/)
+    .withMessage('Only HTTPS URLs are allowed (e.g. https://example.com)'),
 ];
 
 // Apply authentication and verification to all routes

@@ -36,7 +36,7 @@
     return;
   }
 
-  // Script loaded - ready to track
+  console.log('%c✅ Webtrackly Script Successfully Added', 'color: #642aed; font-size: 14px; font-weight: bold;');
 
   /**
    * Check if this is a new visitor session
