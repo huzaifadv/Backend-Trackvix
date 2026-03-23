@@ -192,6 +192,7 @@ Give a specific, actionable fix for each missing element.`;
 
     // Parse JSON response (strip markdown code fences if present)
     let jsonStr = textContent.trim();
+    logger.info(`[AI Analyzer] Raw Gemini response (first 500 chars): ${jsonStr.substring(0, 500)}`);
     // Remove all markdown code fences
     jsonStr = jsonStr.replace(/^```(?:json)?\s*/i, '').replace(/\s*```$/, '').trim();
     // Extract JSON object if wrapped in extra text
