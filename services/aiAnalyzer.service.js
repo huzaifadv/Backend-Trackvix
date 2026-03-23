@@ -192,8 +192,12 @@ Give a specific, actionable fix for each missing element.`;
 
     // Parse JSON response (strip markdown code fences if present)
     let jsonStr = textContent.trim();
-    if (jsonStr.startsWith('```')) {
-      jsonStr = jsonStr.replace(/^```(?:json)?\n?/, '').replace(/\n?```$/, '');
+    // Remove all markdown code fences
+    jsonStr = jsonStr.replace(/^```(?:json)?\s*/i, '').replace(/\s*```$/, '').trim();
+    // Extract JSON object if wrapped in extra text
+    const jsonMatch = jsonStr.match(/\{[\s\S]*\}/);
+    if (jsonMatch) {
+      jsonStr = jsonMatch[0];
     }
 
     const parsed = JSON.parse(jsonStr);
